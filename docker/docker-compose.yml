@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # Production service
+  youtube-mcp-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: youtube-mcp-server
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - MCP_TRANSPORT=http
+      - HTTP_ENABLED=true
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=3000
+      - CACHE_TYPE=sqlite
+      - CACHE_SQLITE_PATH=/app/data/cache.db
+      - LOG_LEVEL=info
+      - LOG_PRETTY_PRINT=false
+    volumes:
+      - youtube-mcp-data:/app/data
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - youtube-mcp-network
+
+  # Development service
+  youtube-mcp-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    container_name: youtube-mcp-dev
+    environment:
+      - NODE_ENV=development
+      - MCP_TRANSPORT=stdio
+      - LOG_LEVEL=debug
+      - LOG_PRETTY_PRINT=true
+    volumes:
+      - ../src:/app/src:ro
+      - ../tests:/app/tests:ro
+      - ../package.json:/app/package.json:ro
+      - ../tsconfig.json:/app/tsconfig.json:ro
+      - youtube-mcp-dev-data:/app/data
+    stdin_open: true
+    tty: true
+    networks:
+      - youtube-mcp-network
+
+  # Redis for distributed caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: youtube-mcp-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - youtube-mcp-network
+
+volumes:
+  youtube-mcp-data:
+  youtube-mcp-dev-data:
+  redis-data:
+
+networks:
+  youtube-mcp-network:
+    driver: bridge
