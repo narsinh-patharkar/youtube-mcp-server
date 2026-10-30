@@ -1,0 +1,90 @@
+flowchart TB
+    subgraph UL["User Layer"]
+        U["You / Claude Code User"]
+    end
+
+    subgraph MCL["MCP Client Layer"]
+        CC["Claude Code<br/>(MCP Client)"]
+    end
+
+    subgraph MCP_SERVER["MCP Server (Your TypeScript App)"]
+        direction TB
+
+        MCP["MCP Server<br/>@modelcontextprotocol/sdk"]
+
+        subgraph TOOLS["Tools"]
+            T1["get_transcript<br/>Tool"]
+            T2["get_summary<br/>Tool"]
+            T3["search_videos<br/>Tool"]
+        end
+
+        subgraph SERVICES["Services"]
+            TS["Transcript Service"]
+            SS["Summarization Service"]
+            CS["Cache Service"]
+            RL["Rate Limiter"]
+        end
+
+        subgraph TP["Transcript Providers"]
+            YTA["youtube-transcript-api<br/>Primary"]
+            YTD["yt-dlp<br/>Fallback"]
+        end
+
+        subgraph LP["LLM Providers"]
+            CLD["Claude API<br/>Anthropic"]
+            OAI["OpenAI API"]
+            OLL["Ollama<br/>Local"]
+        end
+    end
+
+    subgraph ES["External Services"]
+        YT["YouTube<br/>Video Platform"]
+        YTAPI["YouTube Data API<br/>Optional - for search"]
+    end
+
+    subgraph STORAGE["Storage"]
+        SQL[("SQLite Cache<br/>Transcripts + Summaries")]
+    end
+
+    %% Connections
+    U -->|"Types request"| CC
+    CC -->|"MCP Protocol<br/>stdio / HTTP"| MCP
+
+    MCP --> T1
+    MCP --> T2
+    MCP --> T3
+
+    T1 --> TS
+    T2 --> TS
+    T2 --> SS
+
+    TS --> CS
+    CS --> SQL
+
+    TS --> YTA
+    TS --> YTD
+
+    YTA -->|"Fetch captions"| YT
+    YTD -->|"Download subtitles"| YT
+
+    T3 --> YTAPI
+
+    SS --> CLD
+    SS --> OAI
+    SS --> OLL
+
+    RL -.->|"Protects"| TS
+    RL -.->|"Protects"| SS
+
+    %% Styling
+    classDef user fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    classDef mcp fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef service fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef external fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef storage fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000
+
+    class U,CC user
+    class MCP,T1,T2,T3 mcp
+    class TS,SS,CS,RL service
+    class YTA,YTD,CLD,OAI,OLL,YT,YTAPI external
+    class SQL storage

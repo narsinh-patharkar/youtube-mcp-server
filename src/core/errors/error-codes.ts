@@ -1,0 +1,183 @@
+/**
+ * Error Codes - Standardized error identifiers for the application
+ * Used for: logging, monitoring, client-facing error handling, retry logic
+ */
+
+export const ErrorCodes = {
+  // Configuration errors (1xxx)
+  CONFIG_INVALID: 'CONFIG_INVALID',
+  CONFIG_MISSING_REQUIRED: 'CONFIG_MISSING_REQUIRED',
+  CONFIG_VALIDATION_FAILED: 'CONFIG_VALIDATION_FAILED',
+
+  // Video/URL errors (2xxx)
+  VIDEO_ID_INVALID: 'VIDEO_ID_INVALID',
+  VIDEO_URL_INVALID: 'VIDEO_URL_INVALID',
+  VIDEO_NOT_FOUND: 'VIDEO_NOT_FOUND',
+  VIDEO_PRIVATE: 'VIDEO_PRIVATE',
+  VIDEO_AGE_RESTRICTED: 'VIDEO_AGE_RESTRICTED',
+  VIDEO_GEO_BLOCKED: 'VIDEO_GEO_BLOCKED',
+  VIDEO_DELETED: 'VIDEO_DELETED',
+
+  // Transcript errors (3xxx)
+  TRANSCRIPT_NOT_FOUND: 'TRANSCRIPT_NOT_FOUND',
+  TRANSCRIPT_DISABLED: 'TRANSCRIPT_DISABLED',
+  TRANSCRIPT_LANGUAGE_UNAVAILABLE: 'TRANSCRIPT_LANGUAGE_UNAVAILABLE',
+  TRANSCRIPT_FETCH_FAILED: 'TRANSCRIPT_FETCH_FAILED',
+  TRANSCRIPT_PARSE_FAILED: 'TRANSCRIPT_PARSE_FAILED',
+  TRANSCRIPT_TOO_LONG: 'TRANSCRIPT_TOO_LONG',
+  TRANSCRIPT_EMPTY: 'TRANSCRIPT_EMPTY',
+
+  // Summarization errors (4xxx)
+  SUMMARIZATION_FAILED: 'SUMMARIZATION_FAILED',
+  SUMMARIZATION_PROVIDER_UNAVAILABLE: 'SUMMARIZATION_PROVIDER_UNAVAILABLE',
+  SUMMARIZATION_API_ERROR: 'SUMMARIZATION_API_ERROR',
+  SUMMARIZATION_TOKEN_LIMIT: 'SUMMARIZATION_TOKEN_LIMIT',
+  SUMMARIZATION_TIMEOUT: 'SUMMARIZATION_TIMEOUT',
+  SUMMARIZATION_EMPTY_RESULT: 'SUMMARIZATION_EMPTY_RESULT',
+
+  // LLM Provider errors (5xxx)
+  LLM_API_KEY_INVALID: 'LLM_API_KEY_INVALID',
+  LLM_API_KEY_MISSING: 'LLM_API_KEY_MISSING',
+  LLM_RATE_LIMITED: 'LLM_RATE_LIMITED',
+  LLM_QUOTA_EXCEEDED: 'LLM_QUOTA_EXCEEDED',
+  LLM_MODEL_UNAVAILABLE: 'LLM_MODEL_UNAVAILABLE',
+  LLM_CONNECTION_FAILED: 'LLM_CONNECTION_FAILED',
+  LLM_INVALID_REQUEST: 'LLM_INVALID_REQUEST',
+  LLM_CONTENT_FILTER: 'LLM_CONTENT_FILTER',
+
+  // Cache errors (6xxx)
+  CACHE_CONNECTION_FAILED: 'CACHE_CONNECTION_FAILED',
+  CACHE_READ_FAILED: 'CACHE_READ_FAILED',
+  CACHE_WRITE_FAILED: 'CACHE_WRITE_FAILED',
+  CACHE_KEY_NOT_FOUND: 'CACHE_KEY_NOT_FOUND',
+  CACHE_CORRUPTED: 'CACHE_CORRUPTED',
+
+  // Rate limiting errors (7xxx)
+  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
+  RATE_LIMIT_BURST_EXCEEDED: 'RATE_LIMIT_BURST_EXCEEDED',
+
+  // MCP Protocol errors (8xxx)
+  MCP_TOOL_NOT_FOUND: 'MCP_TOOL_NOT_FOUND',
+  MCP_INVALID_ARGUMENTS: 'MCP_INVALID_ARGUMENTS',
+  MCP_TOOL_EXECUTION_FAILED: 'MCP_TOOL_EXECUTION_FAILED',
+  MCP_TRANSPORT_ERROR: 'MCP_TRANSPORT_ERROR',
+  MCP_PROTOCOL_ERROR: 'MCP_PROTOCOL_ERROR',
+
+  // HTTP/SSE errors (9xxx)
+  HTTP_REQUEST_FAILED: 'HTTP_REQUEST_FAILED',
+  HTTP_UNAUTHORIZED: 'HTTP_UNAUTHORIZED',
+  HTTP_FORBIDDEN: 'HTTP_FORBIDDEN',
+  HTTP_NOT_FOUND: 'HTTP_NOT_FOUND',
+  HTTP_TIMEOUT: 'HTTP_TIMEOUT',
+  HTTP_TOO_MANY_REQUESTS: 'HTTP_TOO_MANY_REQUESTS',
+
+  // External service errors (10xxx)
+  EXTERNAL_SERVICE_UNAVAILABLE: 'EXTERNAL_SERVICE_UNAVAILABLE',
+  EXTERNAL_SERVICE_TIMEOUT: 'EXTERNAL_SERVICE_TIMEOUT',
+  EXTERNAL_SERVICE_INVALID_RESPONSE: 'EXTERNAL_SERVICE_INVALID_RESPONSE',
+
+  // Internal errors (99xxx)
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  UNHANDLED_REJECTION: 'UNHANDLED_REJECTION',
+  UNCAUGHT_EXCEPTION: 'UNCAUGHT_EXCEPTION',
+} as const;
+
+export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];
+
+/**
+ * Error code categories for routing and handling
+ */
+export const ErrorCategories = {
+  // Client errors (4xx equivalent) - user can fix
+  CLIENT: [
+    ErrorCodes.CONFIG_MISSING_REQUIRED,
+    ErrorCodes.VIDEO_ID_INVALID,
+    ErrorCodes.VIDEO_URL_INVALID,
+    ErrorCodes.VIDEO_PRIVATE,
+    ErrorCodes.VIDEO_AGE_RESTRICTED,
+    ErrorCodes.VIDEO_GEO_BLOCKED,
+    ErrorCodes.TRANSCRIPT_LANGUAGE_UNAVAILABLE,
+    ErrorCodes.LLM_API_KEY_MISSING,
+    ErrorCodes.LLM_API_KEY_INVALID,
+    ErrorCodes.MCP_INVALID_ARGUMENTS,
+    ErrorCodes.HTTP_UNAUTHORIZED,
+    ErrorCodes.HTTP_FORBIDDEN,
+  ] as ErrorCode[],
+
+  // Retryable errors - can succeed on retry
+  RETRYABLE: [
+    ErrorCodes.TRANSCRIPT_FETCH_FAILED,
+    ErrorCodes.TRANSCRIPT_PARSE_FAILED,
+    ErrorCodes.SUMMARIZATION_TIMEOUT,
+    ErrorCodes.LLM_RATE_LIMITED,
+    ErrorCodes.LLM_CONNECTION_FAILED,
+    ErrorCodes.CACHE_CONNECTION_FAILED,
+    ErrorCodes.CACHE_READ_FAILED,
+    ErrorCodes.CACHE_WRITE_FAILED,
+    ErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE,
+    ErrorCodes.EXTERNAL_SERVICE_TIMEOUT,
+    ErrorCodes.HTTP_TIMEOUT,
+    ErrorCodes.HTTP_TOO_MANY_REQUESTS,
+  ] as ErrorCode[],
+
+  // Non-retryable server errors (5xx equivalent)
+  SERVER: [
+    ErrorCodes.CONFIG_INVALID,
+    ErrorCodes.CONFIG_VALIDATION_FAILED,
+    ErrorCodes.VIDEO_NOT_FOUND,
+    ErrorCodes.VIDEO_DELETED,
+    ErrorCodes.TRANSCRIPT_NOT_FOUND,
+    ErrorCodes.TRANSCRIPT_DISABLED,
+    ErrorCodes.TRANSCRIPT_TOO_LONG,
+    ErrorCodes.TRANSCRIPT_EMPTY,
+    ErrorCodes.SUMMARIZATION_FAILED,
+    ErrorCodes.SUMMARIZATION_PROVIDER_UNAVAILABLE,
+    ErrorCodes.SUMMARIZATION_API_ERROR,
+    ErrorCodes.SUMMARIZATION_TOKEN_LIMIT,
+    ErrorCodes.SUMMARIZATION_EMPTY_RESULT,
+    ErrorCodes.LLM_QUOTA_EXCEEDED,
+    ErrorCodes.LLM_MODEL_UNAVAILABLE,
+    ErrorCodes.LLM_INVALID_REQUEST,
+    ErrorCodes.LLM_CONTENT_FILTER,
+    ErrorCodes.CACHE_CORRUPTED,
+    ErrorCodes.RATE_LIMIT_EXCEEDED,
+    ErrorCodes.RATE_LIMIT_BURST_EXCEEDED,
+    ErrorCodes.MCP_TOOL_NOT_FOUND,
+    ErrorCodes.MCP_TOOL_EXECUTION_FAILED,
+    ErrorCodes.MCP_TRANSPORT_ERROR,
+    ErrorCodes.MCP_PROTOCOL_ERROR,
+    ErrorCodes.HTTP_NOT_FOUND,
+    ErrorCodes.EXTERNAL_SERVICE_INVALID_RESPONSE,
+    ErrorCodes.INTERNAL_ERROR,
+  ] as ErrorCode[],
+
+  // Fatal errors - should crash/restart
+  FATAL: [
+    ErrorCodes.UNHANDLED_REJECTION,
+    ErrorCodes.UNCAUGHT_EXCEPTION,
+  ] as ErrorCode[],
+} as const;
+
+export function isClientError(code: ErrorCode): boolean {
+  return ErrorCategories.CLIENT.includes(code);
+}
+
+export function isRetryableError(code: ErrorCode): boolean {
+  return ErrorCategories.RETRYABLE.includes(code);
+}
+
+export function isServerError(code: ErrorCode): boolean {
+  return ErrorCategories.SERVER.includes(code);
+}
+
+export function isFatalError(code: ErrorCode): boolean {
+  return ErrorCategories.FATAL.includes(code);
+}
+
+export function getErrorCategory(code: ErrorCode): 'client' | 'retryable' | 'server' | 'fatal' | 'unknown' {
+  if (isClientError(code)) return 'client';
+  if (isRetryableError(code)) return 'retryable';
+  if (isServerError(code)) return 'server';
+  if (isFatalError(code)) return 'fatal';
+  return 'unknown';
+}
