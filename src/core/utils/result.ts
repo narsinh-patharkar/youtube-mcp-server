@@ -3,15 +3,14 @@
  * Provides type-safe error handling without exceptions
  */
 
-import type { AppError } from '@core/errors/index.js';
 import { toAppError } from '@core/errors/error-utils.js';
+import type { AppError } from '@core/errors/index.js';
 
 /**
  * Result type representing either success (Ok) or failure (Err)
  */
 export type Result<T, E = AppError> =
-  | { readonly ok: true; readonly value: T }
-  | { readonly ok: false; readonly error: E };
+  { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: E };
 
 /**
  * Create a successful Result
@@ -30,11 +29,15 @@ export function err<E>(error: E): Result<never, E> {
 /**
  * Type guards
  */
-export function isOk<T, E>(result: Result<T, E>): result is { readonly ok: true; readonly value: T } {
+export function isOk<T, E>(
+  result: Result<T, E>
+): result is { readonly ok: true; readonly value: T } {
   return result.ok === true;
 }
 
-export function isErr<T, E>(result: Result<T, E>): result is { readonly ok: false; readonly error: E } {
+export function isErr<T, E>(
+  result: Result<T, E>
+): result is { readonly ok: false; readonly error: E } {
   return result.ok === false;
 }
 
@@ -61,7 +64,10 @@ export function mapErr<T, E, F>(result: Result<T, E>, fn: (error: E) => F): Resu
 /**
  * FlatMap (bind) - chain operations that return Results
  */
-export function flatMap<T, U, E>(result: Result<T, E>, fn: (value: T) => Result<U, E>): Result<U, E> {
+export function flatMap<T, U, E>(
+  result: Result<T, E>,
+  fn: (value: T) => Result<U, E>
+): Result<U, E> {
   if (isOk(result)) {
     return fn(result.value);
   }
@@ -136,14 +142,21 @@ export async function tryAsync<T>(fn: () => Promise<T>): Promise<Result<T, AppEr
  */
 export function combine<T extends readonly Result<unknown, unknown>[]>(
   results: T
-): Result<{ [K in keyof T]: T[K] extends Result<infer U, unknown> ? U : never }, T[number] extends Result<unknown, infer E> ? E : never> {
+): Result<
+  { [K in keyof T]: T[K] extends Result<infer U, unknown> ? U : never },
+  T[number] extends Result<unknown, infer E> ? E : never
+> {
   for (const result of results) {
     if (isErr(result)) {
       return result as Result<never, T[number] extends Result<unknown, infer E> ? E : never>;
     }
   }
 
-  return ok(results.map(r => (r as { ok: true; value: unknown }).value) as { [K in keyof T]: T[K] extends Result<infer U, unknown> ? U : never });
+  return ok(
+    results.map((r) => (r as { ok: true; value: unknown }).value) as {
+      [K in keyof T]: T[K] extends Result<infer U, unknown> ? U : never;
+    }
+  );
 }
 
 /**

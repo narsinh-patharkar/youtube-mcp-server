@@ -30,7 +30,10 @@ export class EventEmitter<TEventMap extends Record<string, unknown> = Record<str
   /**
    * Subscribe to an event (one-time)
    */
-  once<K extends keyof TEventMap>(event: K, handler: EventHandler<TEventMap[K]>): EventSubscription {
+  once<K extends keyof TEventMap>(
+    event: K,
+    handler: EventHandler<TEventMap[K]>
+  ): EventSubscription {
     const wrappedHandler: EventHandler<TEventMap[K]> = async (payload) => {
       this.off(event, wrappedHandler);
       await handler(payload);
@@ -113,14 +116,18 @@ export class EventEmitter<TEventMap extends Record<string, unknown> = Record<str
  */
 let _eventEmitter: EventEmitter | null = null;
 
-export function getEventEmitter<TEventMap extends Record<string, unknown> = Record<string, unknown>>(): EventEmitter<TEventMap> {
+export function getEventEmitter<
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
+>(): EventEmitter<TEventMap> {
   if (!_eventEmitter) {
     _eventEmitter = new EventEmitter();
   }
   return _eventEmitter as EventEmitter<TEventMap>;
 }
 
-export function initializeEventEmitter<TEventMap extends Record<string, unknown> = Record<string, unknown>>(): EventEmitter<TEventMap> {
+export function initializeEventEmitter<
+  TEventMap extends Record<string, unknown> = Record<string, unknown>,
+>(): EventEmitter<TEventMap> {
   _eventEmitter = new EventEmitter();
   return _eventEmitter as EventEmitter<TEventMap>;
 }

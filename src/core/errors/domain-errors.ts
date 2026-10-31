@@ -48,11 +48,16 @@ export class AppError extends Error {
   private defaultStatusCode(code: ErrorCode): number {
     const category = getErrorCategory(code);
     switch (category) {
-      case 'client': return 400;
-      case 'retryable': return 503;
-      case 'server': return 500;
-      case 'fatal': return 500;
-      default: return 500;
+      case 'client':
+        return 400;
+      case 'retryable':
+        return 503;
+      case 'server':
+        return 500;
+      case 'fatal':
+        return 500;
+      default:
+        return 500;
     }
   }
 
@@ -71,11 +76,13 @@ export class AppError extends Error {
       context: this.context,
       timestamp: this.timestamp.toISOString(),
       stack: this.stack,
-      cause: this.cause ? {
-        name: this.cause.name,
-        message: this.cause.message,
-        stack: this.cause.stack,
-      } : undefined,
+      cause: this.cause
+        ? {
+            name: this.cause.name,
+            message: this.cause.message,
+            stack: this.cause.stack,
+          }
+        : undefined,
     };
   }
 
@@ -98,25 +105,41 @@ export class AppError extends Error {
 // ============================================================================
 
 export class ConfigError extends AppError {
-  constructor(code: ErrorCode, message: string, options?: { context?: Record<string, unknown>; cause?: Error }) {
+  constructor(
+    code: ErrorCode,
+    message: string,
+    options?: { context?: Record<string, unknown>; cause?: Error }
+  ) {
     super(code, message, options);
   }
 }
 
 export class VideoError extends AppError {
-  constructor(code: ErrorCode, message: string, options?: { context?: Record<string, unknown>; cause?: Error }) {
+  constructor(
+    code: ErrorCode,
+    message: string,
+    options?: { context?: Record<string, unknown>; cause?: Error }
+  ) {
     super(code, message, options);
   }
 }
 
 export class TranscriptError extends AppError {
-  constructor(code: ErrorCode, message: string, options?: { context?: Record<string, unknown>; cause?: Error }) {
+  constructor(
+    code: ErrorCode,
+    message: string,
+    options?: { context?: Record<string, unknown>; cause?: Error }
+  ) {
     super(code, message, options);
   }
 }
 
 export class SummarizationError extends AppError {
-  constructor(code: ErrorCode, message: string, options?: { context?: Record<string, unknown>; cause?: Error }) {
+  constructor(
+    code: ErrorCode,
+    message: string,
+    options?: { context?: Record<string, unknown>; cause?: Error }
+  ) {
     super(code, message, options);
   }
 }
@@ -141,7 +164,11 @@ export class LLMError extends AppError {
 }
 
 export class CacheError extends AppError {
-  constructor(code: ErrorCode, message: string, options?: { context?: Record<string, unknown>; cause?: Error }) {
+  constructor(
+    code: ErrorCode,
+    message: string,
+    options?: { context?: Record<string, unknown>; cause?: Error }
+  ) {
     super(code, message, options);
   }
 }

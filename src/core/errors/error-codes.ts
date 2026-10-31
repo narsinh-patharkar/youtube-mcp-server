@@ -82,7 +82,7 @@ export const ErrorCodes = {
   UNCAUGHT_EXCEPTION: 'UNCAUGHT_EXCEPTION',
 } as const;
 
-export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];
+export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
 
 /**
  * Error code categories for routing and handling
@@ -152,10 +152,7 @@ export const ErrorCategories = {
   ] as ErrorCode[],
 
   // Fatal errors - should crash/restart
-  FATAL: [
-    ErrorCodes.UNHANDLED_REJECTION,
-    ErrorCodes.UNCAUGHT_EXCEPTION,
-  ] as ErrorCode[],
+  FATAL: [ErrorCodes.UNHANDLED_REJECTION, ErrorCodes.UNCAUGHT_EXCEPTION] as ErrorCode[],
 } as const;
 
 export function isClientError(code: ErrorCode): boolean {
@@ -174,7 +171,9 @@ export function isFatalError(code: ErrorCode): boolean {
   return ErrorCategories.FATAL.includes(code);
 }
 
-export function getErrorCategory(code: ErrorCode): 'client' | 'retryable' | 'server' | 'fatal' | 'unknown' {
+export function getErrorCategory(
+  code: ErrorCode
+): 'client' | 'retryable' | 'server' | 'fatal' | 'unknown' {
   if (isClientError(code)) return 'client';
   if (isRetryableError(code)) return 'retryable';
   if (isServerError(code)) return 'server';

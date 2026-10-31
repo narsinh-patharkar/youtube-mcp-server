@@ -39,10 +39,7 @@ export const LogContext = {
 /**
  * Create a child logger with standard bindings
  */
-export function createChildLogger(
-  parent: AppLogger,
-  bindings: Record<string, unknown>
-): AppLogger {
+export function createChildLogger(parent: AppLogger, bindings: Record<string, unknown>): AppLogger {
   return parent.child(bindings);
 }
 

@@ -23,7 +23,10 @@ export function generateUuid(): string {
 /**
  * Generate a secure random string
  */
-export function generateRandomString(length: number = 32, charset: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'): string {
+export function generateRandomString(
+  length: number = 32,
+  charset: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+): string {
   const bytes = randomBytes(length);
   let result = '';
   for (let i = 0; i < length; i++) {
@@ -80,14 +83,17 @@ export function constantTimeEqual(a: string, b: string): boolean {
  * Generate a content hash for caching
  */
 export function contentHash(...parts: (string | number | boolean | null | undefined)[]): string {
-  const input = parts.filter(p => p !== null && p !== undefined).join('|');
+  const input = parts.filter((p) => p !== null && p !== undefined).join('|');
   return sha256(input).slice(0, 16);
 }
 
 /**
  * Generate a cache key with prefix
  */
-export function cacheKey(prefix: string, ...parts: (string | number | boolean | null | undefined)[]): string {
+export function cacheKey(
+  prefix: string,
+  ...parts: (string | number | boolean | null | undefined)[]
+): string {
   return `${prefix}${contentHash(...parts)}`;
 }
 

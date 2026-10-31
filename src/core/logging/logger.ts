@@ -2,9 +2,9 @@
  * Structured Logger - Pino wrapper with application defaults
  */
 
-import pino, { type Logger, type LoggerOptions, type DestinationStream } from 'pino';
 import type { LoggingConfig } from '@config/schema.js';
-import { createRedactor, compileRedactionPatterns } from './redact.js';
+import pino, { type DestinationStream, type Logger, type LoggerOptions } from 'pino';
+import { compileRedactionPatterns, createRedactor } from './redact.js';
 
 /**
  * Create a pino logger instance with application defaults
@@ -15,7 +15,7 @@ export function createLogger(config: LoggingConfig): Logger {
   const options: LoggerOptions = {
     level: config.level,
     redact: {
-      paths: compileRedactionPatterns(config).map(r => r.source),
+      paths: compileRedactionPatterns(config).map((r) => r.source),
       censor: '[REDACTED]',
     },
     base: {
@@ -90,7 +90,10 @@ export function wrapLogger(pinoLogger: Logger): AppLogger {
     error: (msg: string, meta?: Record<string, unknown>) => pinoLogger.error(meta, msg),
     fatal: (msg: string, meta?: Record<string, unknown>) => pinoLogger.fatal(meta, msg),
     child: (bindings: Record<string, unknown>) => wrapLogger(pinoLogger.child(bindings)),
-    flush: () => new Promise<void>((resolve) => { pinoLogger.flush(() => resolve()); }),
+    flush: () =>
+      new Promise<void>((resolve) => {
+        pinoLogger.flush(() => resolve());
+      }),
   };
 }
 

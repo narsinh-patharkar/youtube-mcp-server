@@ -32,7 +32,7 @@ export default defineConfig({
         statements: 80,
       },
     },
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['reflect-metadata', './tests/setup.ts'],
     testTimeout: 30000,
     hookTimeout: 10000,
     pool: 'threads',

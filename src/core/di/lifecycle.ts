@@ -73,14 +73,18 @@ export class LifecycleManager {
         this.logger.debug(`Executing startup hook: ${hook.name}`);
         await hook.execute();
         const durationMs = Number(process.hrtime.bigint() - start) / 1_000_000;
-        this.logger.debug(`Startup hook completed: ${hook.name}`, { durationMs: Math.round(durationMs) });
+        this.logger.debug(`Startup hook completed: ${hook.name}`, {
+          durationMs: Math.round(durationMs),
+        });
       } catch (error) {
         const durationMs = Number(process.hrtime.bigint() - start) / 1_000_000;
         this.logger.error(`Startup hook failed: ${hook.name}`, {
           durationMs: Math.round(durationMs),
           error: error instanceof Error ? error.message : String(error),
         });
-        throw new Error(`Startup hook '${hook.name}' failed: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(
+          `Startup hook '${hook.name}' failed: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
@@ -108,7 +112,9 @@ export class LifecycleManager {
         this.logger.debug(`Executing shutdown hook: ${hook.name}`);
         await hook.execute();
         const durationMs = Number(process.hrtime.bigint() - start) / 1_000_000;
-        this.logger.debug(`Shutdown hook completed: ${hook.name}`, { durationMs: Math.round(durationMs) });
+        this.logger.debug(`Shutdown hook completed: ${hook.name}`, {
+          durationMs: Math.round(durationMs),
+        });
       } catch (error) {
         const durationMs = Number(process.hrtime.bigint() - start) / 1_000_000;
         const err = error instanceof Error ? error : new Error(String(error));
@@ -123,7 +129,7 @@ export class LifecycleManager {
     this.isStarted = false;
 
     if (errors.length > 0) {
-      const messages = errors.map(e => e.message).join('; ');
+      const messages = errors.map((e) => e.message).join('; ');
       throw new Error(`Shutdown completed with errors: ${messages}`);
     }
 
@@ -133,7 +139,10 @@ export class LifecycleManager {
   /**
    * Run all health checks
    */
-  async checkHealth(): Promise<{ healthy: boolean; checks: Record<string, { healthy: boolean; details?: Record<string, unknown> }> }> {
+  async checkHealth(): Promise<{
+    healthy: boolean;
+    checks: Record<string, { healthy: boolean; details?: Record<string, unknown> }>;
+  }> {
     const results: Record<string, { healthy: boolean; details?: Record<string, unknown> }> = {};
 
     for (const check of this.healthChecks) {
@@ -148,7 +157,7 @@ export class LifecycleManager {
       }
     }
 
-    const healthy = Object.values(results).every(r => r.healthy);
+    const healthy = Object.values(results).every((r) => r.healthy);
 
     return { healthy, checks: results };
   }

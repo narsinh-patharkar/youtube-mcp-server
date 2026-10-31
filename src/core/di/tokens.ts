@@ -2,7 +2,15 @@
  * Dependency Injection Tokens - Symbol-based tokens for type-safe DI
  */
 
-import type { AppConfig, TranscriptConfig, SummarizationConfig, CacheConfig, RateLimitConfig, HTTPConfig, LoggingConfig } from '@config/schema.js';
+import type {
+  AppConfig,
+  CacheConfig,
+  HTTPConfig,
+  LoggingConfig,
+  RateLimitConfig,
+  SummarizationConfig,
+  TranscriptConfig,
+} from '@config/schema.js';
 import type { AppLogger } from '@core/logging/index.js';
 
 // ============================================================================

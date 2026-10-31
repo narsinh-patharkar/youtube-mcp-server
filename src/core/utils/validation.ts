@@ -2,9 +2,9 @@
  * Validation Utilities - Zod helpers for runtime validation
  */
 
-import { z, type ZodSchema, ZodError } from 'zod';
+import { z, ZodError, type ZodSchema } from 'zod';
 import type { Result } from './result.js';
-import { ok, err, isOk, isErr, unwrap, unwrapOr, unwrapOrElse } from './result.js';
+import { err, isErr, isOk, ok, unwrap, unwrapOr, unwrapOrElse } from './result.js';
 
 /**
  * Validate data against a schema, returning Result
@@ -35,7 +35,9 @@ export class ValidationError extends Error {
   public readonly issues: z.ZodIssue[];
 
   constructor(zodError: ZodError) {
-    super(`Validation failed: ${zodError.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')}`);
+    super(
+      `Validation failed: ${zodError.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join('; ')}`
+    );
     this.name = 'ValidationError';
     this.issues = zodError.errors;
 
@@ -48,7 +50,7 @@ export class ValidationError extends Error {
     return {
       name: this.name,
       message: this.message,
-      issues: this.issues.map(issue => ({
+      issues: this.issues.map((issue) => ({
         path: issue.path,
         message: issue.message,
         code: issue.code,
@@ -117,10 +119,14 @@ export function validateEnv<T extends Record<string, ZodSchema<unknown>>>(
     const value = env[key];
     const validation = schema.safeParse(value);
     if (!validation.success) {
-      throw new ValidationError(new ZodError([...validation.error.errors].map(e => ({
-        ...e,
-        path: [key, ...e.path],
-      }))));
+      throw new ValidationError(
+        new ZodError(
+          [...validation.error.errors].map((e) => ({
+            ...e,
+            path: [key, ...e.path],
+          }))
+        )
+      );
     }
     result[key] = validation.data;
   }
@@ -135,12 +141,13 @@ export const coerce = {
   number: z.coerce.number(),
   boolean: z.coerce.boolean(),
   date: z.coerce.date(),
-  array: <T>(elementSchema: ZodSchema<T>) => z.preprocess(
-    (val) => (typeof val === 'string' ? val.split(',').map(v => v.trim()) : val),
-    z.array(elementSchema)
-  ),
+  array: <T>(elementSchema: ZodSchema<T>) =>
+    z.preprocess(
+      (val) => (typeof val === 'string' ? val.split(',').map((v) => v.trim()) : val),
+      z.array(elementSchema)
+    ),
 };
 
 // Re-export Result for convenience
+export { err, isErr, isOk, ok, unwrap, unwrapOr, unwrapOrElse } from './result.js';
 export type { Result } from './result.js';
-export { ok, err, isOk, isErr, unwrap, unwrapOr, unwrapOrElse } from './result.js';

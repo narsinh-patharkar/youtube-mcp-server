@@ -2,7 +2,12 @@
  * Test Data Builders - Fluent builders for test fixtures
  */
 
-import type { TranscriptSegment, TranscriptResult, SummaryResult, SummaryStyle } from '@domain/transcript/types.js';
+import type {
+  SummaryResult,
+  SummaryStyle,
+  TranscriptResult,
+  TranscriptSegment,
+} from '@domain/transcript/types.js';
 import type { VideoId } from '@domain/video/types.js';
 import { ulid } from 'ulid';
 
@@ -41,7 +46,7 @@ export function aTranscriptResult(overrides: Partial<TranscriptResult> = {}): Tr
     aTranscriptSegment({ text: 'Let me show you the basics', start: 8, duration: 4 }),
   ];
 
-  const fullText = segments.map(s => s.text).join(' ');
+  const fullText = segments.map((s) => s.text).join(' ');
 
   return {
     videoId: overrides.videoId ?? aVideoId().id,
@@ -61,7 +66,9 @@ export function aSummaryResult(overrides: Partial<SummaryResult> = {}): SummaryR
   return {
     videoId: overrides.videoId ?? aVideoId().id,
     style: overrides.style ?? 'detailed',
-    summary: overrides.summary ?? 'This video covers TypeScript fundamentals including types, interfaces, and generics.',
+    summary:
+      overrides.summary ??
+      'This video covers TypeScript fundamentals including types, interfaces, and generics.',
     keyPoints: overrides.keyPoints ?? [
       'TypeScript adds static typing to JavaScript',
       'Interfaces define object shapes',
@@ -82,12 +89,17 @@ export function aSummaryResult(overrides: Partial<SummaryResult> = {}): SummaryR
 /**
  * Build multiple transcript segments for a longer video
  */
-export function buildTranscriptSegments(count: number, baseText: string = 'Segment'): TranscriptSegment[] {
-  return Array.from({ length: count }, (_, i) => aTranscriptSegment({
-    text: `${baseText} ${i + 1}`,
-    start: i * 30,
-    duration: 25,
-  }));
+export function buildTranscriptSegments(
+  count: number,
+  baseText: string = 'Segment'
+): TranscriptSegment[] {
+  return Array.from({ length: count }, (_, i) =>
+    aTranscriptSegment({
+      text: `${baseText} ${i + 1}`,
+      start: i * 30,
+      duration: 25,
+    })
+  );
 }
 
 /**
@@ -95,7 +107,7 @@ export function buildTranscriptSegments(count: number, baseText: string = 'Segme
  */
 export function aLongTranscriptResult(segmentCount: number = 500): TranscriptResult {
   const segments = buildTranscriptSegments(segmentCount, 'This is a long transcript segment');
-  const fullText = segments.map(s => s.text).join(' ');
+  const fullText = segments.map((s) => s.text).join(' ');
 
   return {
     videoId: aVideoId().id,
@@ -110,7 +122,9 @@ export function aLongTranscriptResult(segmentCount: number = 500): TranscriptRes
 /**
  * Build transcript with specific languages
  */
-export function aMultiLanguageTranscript(languages: string[] = ['en', 'es', 'fr']): Record<string, TranscriptResult> {
+export function aMultiLanguageTranscript(
+  languages: string[] = ['en', 'es', 'fr']
+): Record<string, TranscriptResult> {
   const result: Record<string, TranscriptResult> = {};
   for (const lang of languages) {
     result[lang] = aTranscriptResult({ language: lang });
@@ -121,7 +135,10 @@ export function aMultiLanguageTranscript(languages: string[] = ['en', 'es', 'fr'
 /**
  * Build summary with specific style
  */
-export function aStyledSummary(style: SummaryStyle, overrides: Partial<SummaryResult> = {}): SummaryResult {
+export function aStyledSummary(
+  style: SummaryStyle,
+  overrides: Partial<SummaryResult> = {}
+): SummaryResult {
   const styleContent: Record<SummaryStyle, Partial<SummaryResult>> = {
     concise: {
       summary: 'Video covers TypeScript basics.',

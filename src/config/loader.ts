@@ -1,7 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { AppConfigSchema, type AppConfig } from './schema.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -103,7 +103,7 @@ function parseValue(value: string): unknown {
 
   // Array (comma-separated)
   if (value.includes(',') && !value.includes(':')) {
-    return value.split(',').map(v => v.trim());
+    return value.split(',').map((v) => v.trim());
   }
 
   // String (default)
@@ -119,9 +119,9 @@ export function loadConfig(rootDir?: string): AppConfig {
   const result = AppConfigSchema.safeParse(nested);
 
   if (!result.success) {
-    const errors = result.error.issues.map(issue =>
-      `${issue.path.join('.')}: ${issue.message}`
-    ).join('\n');
+    const errors = result.error.issues
+      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+      .join('\n');
     throw new Error(`Configuration validation failed:\n${errors}`);
   }
 
@@ -131,9 +131,9 @@ export function loadConfig(rootDir?: string): AppConfig {
 export function validateConfig(config: unknown): AppConfig {
   const result = AppConfigSchema.safeParse(config);
   if (!result.success) {
-    const errors = result.error.issues.map(issue =>
-      `${issue.path.join('.')}: ${issue.message}`
-    ).join('\n');
+    const errors = result.error.issues
+      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+      .join('\n');
     throw new Error(`Configuration validation failed:\n${errors}`);
   }
   return result.data;

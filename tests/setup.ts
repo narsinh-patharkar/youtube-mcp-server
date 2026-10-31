@@ -2,12 +2,12 @@
  * Test Setup - Global test configuration and utilities
  */
 
-import 'reflect-metadata';
-import { beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest';
 import { resetContainer } from '@core/di/container.js';
 import { resetLifecycleManager } from '@core/di/lifecycle.js';
 import { resetEventEmitter } from '@core/events/emitter.js';
 import { setLogger } from '@core/logging/logger.js';
+import 'reflect-metadata';
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 // Mock console methods to reduce noise in tests
 const originalConsole = { ...console };

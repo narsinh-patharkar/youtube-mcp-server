@@ -9,7 +9,7 @@ import { isAppError, isErrorRetryable } from '@core/errors/index.js';
  * Sleep for specified milliseconds
  */
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -28,10 +28,7 @@ export interface RetryOptions {
 /**
  * Execute a function with exponential backoff retry
  */
-export async function withRetry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const {
     maxAttempts = 3,
     baseDelayMs = 1000,
@@ -73,7 +70,12 @@ export async function withRetry<T>(
   throw lastError!;
 }
 
-function calculateDelay(attempt: number, baseDelayMs: number, maxDelayMs: number, jitter: boolean): number {
+function calculateDelay(
+  attempt: number,
+  baseDelayMs: number,
+  maxDelayMs: number,
+  jitter: boolean
+): number {
   const delay = Math.min(baseDelayMs * Math.pow(2, attempt), maxDelayMs);
   if (jitter) {
     const jitterAmount = delay * 0.25;
@@ -103,8 +105,8 @@ export async function withTimeout<T>(
  * Circuit Breaker States
  */
 export enum CircuitState {
-  CLOSED = 'closed',     // Normal operation
-  OPEN = 'open',         // Failing, reject immediately
+  CLOSED = 'closed', // Normal operation
+  OPEN = 'open', // Failing, reject immediately
   HALF_OPEN = 'half_open', // Testing if service recovered
 }
 
@@ -112,10 +114,10 @@ export enum CircuitState {
  * Circuit Breaker Configuration
  */
 export interface CircuitBreakerOptions {
-  failureThreshold?: number;    // Failures before opening (default: 5)
-  successThreshold?: number;    // Successes before closing (default: 2)
-  timeoutMs?: number;           // Time before half-open (default: 30000)
-  monitoringPeriodMs?: number;  // Rolling window for failures (default: 60000)
+  failureThreshold?: number; // Failures before opening (default: 5)
+  successThreshold?: number; // Successes before closing (default: 2)
+  timeoutMs?: number; // Time before half-open (default: 30000)
+  monitoringPeriodMs?: number; // Rolling window for failures (default: 60000)
   onStateChange?: (state: CircuitState) => void;
 }
 
@@ -185,7 +187,10 @@ export class CircuitBreaker {
 
     if (this.state === CircuitState.HALF_OPEN) {
       this.transitionTo(CircuitState.OPEN);
-    } else if (this.state === CircuitState.CLOSED && this.failures >= this.options.failureThreshold) {
+    } else if (
+      this.state === CircuitState.CLOSED &&
+      this.failures >= this.options.failureThreshold
+    ) {
       this.transitionTo(CircuitState.OPEN);
     }
   }
@@ -222,7 +227,7 @@ export class Semaphore {
       return;
     }
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.waitQueue.push(resolve);
     });
   }
@@ -265,18 +270,22 @@ export async function withConcurrency<T>(
   const semaphore = new Semaphore(concurrency);
   const errors: Error[] = [];
 
-  await Promise.all(items.map(async item => {
-    await semaphore.withPermit(async () => {
-      try {
-        await fn(item);
-      } catch (error) {
-        errors.push(error instanceof Error ? error : new Error(String(error)));
-      }
-    });
-  }));
+  await Promise.all(
+    items.map(async (item) => {
+      await semaphore.withPermit(async () => {
+        try {
+          await fn(item);
+        } catch (error) {
+          errors.push(error instanceof Error ? error : new Error(String(error)));
+        }
+      });
+    })
+  );
 
   if (errors.length > 0) {
-    throw new Error(`${errors.length} operations failed: ${errors.map(e => e.message).join('; ')}`);
+    throw new Error(
+      `${errors.length} operations failed: ${errors.map((e) => e.message).join('; ')}`
+    );
   }
 }
 
@@ -291,10 +300,12 @@ export async function mapConcurrent<T, R>(
   const semaphore = new Semaphore(concurrency);
   const results: R[] = [];
 
-  await Promise.all(items.map(async item => {
-    const result = await semaphore.withPermit(() => fn(item));
-    results.push(result);
-  }));
+  await Promise.all(
+    items.map(async (item) => {
+      const result = await semaphore.withPermit(() => fn(item));
+      results.push(result);
+    })
+  );
 
   return results;
 }

@@ -2,55 +2,55 @@
  * Core Module - Public API
  */
 
-export * from './errors/index.js';
-export * from './logging/index.js';
 export * from './di/index.js';
+export * from './errors/index.js';
 export * from './events/index.js';
+export * from './logging/index.js';
 // Re-export utils separately to avoid conflicts with errors
 export {
-  // Result types
-  type Result,
-  ok,
+  CircuitBreaker,
+  CircuitState,
+  CommonSchemas,
+  Semaphore,
+  ValidationError,
+  cacheKey,
+  checksum,
+  coerce,
+  constantTimeEqual,
+  contentHash,
+  createTransformSchema,
+  debounce,
   err,
-  isOk,
+  generateApiKey,
+  // Crypto
+  generateId,
+  generateRandomString,
+  generateToken,
+  generateUuid,
+  hmacSha256,
   isErr,
+  isOk,
+  mapConcurrent,
+  ok,
+  parseApiKey,
+  sha256,
+  sha512,
+  // Async utilities
+  sleep,
+  throttle,
+  tryAsync,
+  trySync,
   unwrap,
   unwrapOr,
   unwrapOrElse,
-  trySync,
-  tryAsync,
-  // Async utilities
-  sleep,
-  withRetry,
-  withTimeout,
-  CircuitBreaker,
-  CircuitState,
-  Semaphore,
-  withConcurrency,
-  mapConcurrent,
-  debounce,
-  throttle,
   // Validation
   validate,
-  validateOrThrow,
-  ValidationError,
-  createTransformSchema,
-  CommonSchemas,
   validateEnv,
-  coerce,
-  // Crypto
-  generateId,
-  generateUuid,
-  generateRandomString,
-  generateToken,
-  sha256,
-  sha512,
-  hmacSha256,
-  constantTimeEqual,
-  contentHash,
-  cacheKey,
+  validateOrThrow,
   verifyHmacSha256,
-  checksum,
-  generateApiKey,
-  parseApiKey,
+  withConcurrency,
+  withRetry,
+  withTimeout,
+  // Result types
+  type Result,
 } from './utils/index.js';
