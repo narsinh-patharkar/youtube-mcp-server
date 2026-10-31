@@ -3,3 +3,4 @@
  */
 
 export * from './transcript.service.js';
+export * from './summary.service.js';

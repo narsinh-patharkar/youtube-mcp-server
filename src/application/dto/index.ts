@@ -3,3 +3,4 @@
  */
 
 export * from './transcript.dto.js';
+export * from './summary.dto.js';

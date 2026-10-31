@@ -18,15 +18,26 @@ import { initializeLifecycleManager, type LifecycleManager } from '@core/di/life
 import { initializeEventEmitter, type EventEmitter } from '@core/events/emitter.js';
 import { initializeLogger, type AppLogger } from '@core/logging/logger.js';
 
-// Infrastructure adapters
+// Infrastructure adapters - Transcript
 import { MemoryTranscriptRepository } from '@infrastructure/transcript/memory-transcript.repository.js';
 import { SqliteTranscriptRepository } from '@infrastructure/transcript/sqlite-transcript.repository.js';
 import { YoutubeTranscriptApiAdapter } from '@infrastructure/transcript/youtube-transcript-api.adapter.js';
 import { YtDlpAdapter } from '@infrastructure/transcript/yt-dlp.adapter.js';
 
+// Infrastructure adapters - LLM
+import { ClaudeAdapter } from '@infrastructure/llm/claude.adapter.js';
+import { OpenAIAdapter } from '@infrastructure/llm/openai.adapter.js';
+import { OllamaAdapter } from '@infrastructure/llm/ollama.adapter.js';
+import { LLMRouter } from '@infrastructure/llm/llm.router.js';
+import { ChunkingService } from '@infrastructure/llm/chunking.service.js';
+import { MemorySummaryRepository } from '@infrastructure/llm/memory-summary.repository.js';
+import { SqliteSummaryRepository } from '@infrastructure/llm/sqlite-summary.repository.js';
+
 // Application services
 import { TranscriptService } from '@application/services/transcript.service.js';
+import { SummaryService } from '@application/services/summary.service.js';
 import { GetTranscriptUseCase } from '@application/use-cases/get-transcript.use-case.js';
+import { GetSummaryUseCase } from '@application/use-cases/get-summary.use-case.js';
 
 /**
  * Register all core infrastructure services
@@ -103,20 +114,132 @@ export function registerInfrastructureAdapters(_container: TypedContainer): void
     return new MemoryTranscriptRepository(cacheConfig.ttlSeconds, cacheConfig.cleanupIntervalMs);
   });
 
-  // LLM Adapters - will be registered in Phase 3
-  // provideFactory('claudeAdapter', () => new ClaudeAdapter(...));
-  // provideFactory('openaiAdapter', () => new OpenAIAdapter(...));
-  // provideFactory('ollamaAdapter', () => new OllamaAdapter(...));
+  // Summary Repository - choose based on config
+  provideFactory('summaryRepository', (_c) => {
+    const cacheConfig = _c.resolve('cacheConfig') as CacheConfig;
+    const logger = _c.resolve('logger') as {
+      debug: (msg: string, meta?: Record<string, unknown>) => void;
+      error: (msg: string, meta?: Record<string, unknown>) => void;
+    };
+    if (cacheConfig.type === 'memory' || cacheConfig.type === 'sqlite') {
+      if (cacheConfig.type === 'memory') {
+        return new MemorySummaryRepository(
+          cacheConfig.ttlSeconds,
+          cacheConfig.cleanupIntervalMs
+        );
+      }
+      const repo = new SqliteSummaryRepository(cacheConfig, logger);
+      // Initialize asynchronously - will be ready by first use
+      repo
+        .initialize()
+        .catch((err) =>
+          logger.error('Failed to initialize SQLite summary repository', { error: err.message })
+        );
+      return repo;
+    }
+    // Default to memory
+    return new MemorySummaryRepository(cacheConfig.ttlSeconds, cacheConfig.cleanupIntervalMs);
+  });
 
-  // LLM Router - will be registered in Phase 3
-  // provideFactory('llmRouter', (_c) => { ... });
+  // LLM Adapters
+  provideFactory('claudeAdapter', (_c) => {
+    const summarizationConfig = _c.resolve('summarizationConfig') as SummarizationConfig;
+    const claudeConfig = summarizationConfig.claude;
+    if (!claudeConfig?.apiKey) {
+      throw new Error('Claude API key not configured');
+    }
+    return new ClaudeAdapter(
+      {
+        timeoutMs: claudeConfig.timeoutMs,
+        maxRetries: 2,
+        temperature: claudeConfig.temperature,
+        maxTokens: claudeConfig.maxTokens,
+      },
+      claudeConfig.apiKey,
+      claudeConfig.model
+    );
+  });
+  provideFactory('openaiAdapter', (_c) => {
+    const summarizationConfig = _c.resolve('summarizationConfig') as SummarizationConfig;
+    const openaiConfig = summarizationConfig.openai;
+    if (!openaiConfig?.apiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+    return new OpenAIAdapter(
+      {
+        timeoutMs: openaiConfig.timeoutMs,
+        maxRetries: 2,
+        temperature: openaiConfig.temperature,
+        maxTokens: openaiConfig.maxTokens,
+      },
+      openaiConfig.apiKey,
+      openaiConfig.model,
+      openaiConfig.baseUrl,
+      openaiConfig.organization
+    );
+  });
+  provideFactory('ollamaAdapter', (_c) => {
+    const summarizationConfig = _c.resolve('summarizationConfig') as SummarizationConfig;
+    const ollamaConfig = summarizationConfig.ollama;
+    if (!ollamaConfig?.host) {
+      throw new Error('Ollama host not configured');
+    }
+    return new OllamaAdapter(
+      {
+        timeoutMs: ollamaConfig.timeoutMs,
+        maxRetries: 2,
+        temperature: ollamaConfig.temperature,
+        maxTokens: ollamaConfig.maxTokens,
+      },
+      ollamaConfig.host,
+      ollamaConfig.model,
+      ollamaConfig.keepAlive
+    );
+  });
 
-  // Chunking Service - will be registered in Phase 3
-  // provideFactory('chunkingService', () => new ChunkingService(...));
+  // LLM Router - routes to providers with fallback
+  provideFactory('llmRouter', (_c) => {
+    const summarizationConfig = _c.resolve('summarizationConfig') as SummarizationConfig;
+    const providers: any[] = [];
 
-  // Cache Repositories - generic cache repos (different from transcript-specific)
-  // provideFactory('sqliteRepository', () => new SqliteRepository(...));
-  // provideFactory('memoryRepository', () => new MemoryRepository(...));
+    // Add available providers based on config
+    const claudeConfig = summarizationConfig.claude;
+    if (claudeConfig?.apiKey) {
+      providers.push(_c.resolve('claudeAdapter'));
+    }
+
+    const openaiConfig = summarizationConfig.openai;
+    if (openaiConfig?.apiKey) {
+      providers.push(_c.resolve('openaiAdapter'));
+    }
+
+    const ollamaConfig = summarizationConfig.ollama;
+    if (ollamaConfig?.host) {
+      providers.push(_c.resolve('ollamaAdapter'));
+    }
+
+    return new LLMRouter(
+      {
+        timeoutMs: 120000,
+        maxRetries: 2,
+        temperature: summarizationConfig.claude?.temperature ?? 0.3,
+        maxTokens: summarizationConfig.claude?.maxTokens ?? 8192,
+      },
+      providers,
+      summarizationConfig.provider
+    );
+  });
+
+  // Chunking Service
+  provideFactory('chunkingService', (_c) => {
+    const summarizationConfig = _c.resolve('summarizationConfig') as SummarizationConfig;
+    return new ChunkingService({
+      maxTranscriptTokens: summarizationConfig.maxTranscriptTokens,
+      chunkSizeTokens: summarizationConfig.chunkSizeTokens,
+      chunkOverlapTokens: summarizationConfig.chunkOverlapTokens,
+      enableChunking: summarizationConfig.enableChunking,
+    });
+  });
 }
 
 /**
@@ -134,8 +257,18 @@ export function registerApplicationServices(_container: TypedContainer): void {
     });
   });
 
-  // Summary Service - will be registered in Phase 3
-  // provideFactory('summaryService', (_c) => { ... });
+  // Summary Service
+  provideFactory('summaryService', (_c) => {
+    return new SummaryService({
+      transcriptService: _c.resolve('transcriptService'),
+      llmRouter: _c.resolve('llmRouter'),
+      chunkingService: _c.resolve('chunkingService'),
+      repository: _c.resolve('summaryRepository'),
+      config: _c.resolve('summarizationConfig'),
+      eventEmitter: _c.resolve('eventEmitter'),
+      logger: _c.resolve('logger'),
+    });
+  });
 
   // Cache Service - will be registered in Phase 3
   // provideFactory('cacheService', (_c) => { ... });
@@ -152,7 +285,13 @@ export function registerUseCases(_container: TypedContainer): void {
     });
   });
 
-  // provideFactory('getSummaryUseCase', (_c) => { ... });
+  provideFactory('getSummaryUseCase', (_c) => {
+    return new GetSummaryUseCase({
+      summaryService: _c.resolve('summaryService'),
+      logger: _c.resolve('logger'),
+    });
+  });
+
   // provideFactory('searchVideosUseCase', (_c) => { ... });
 }
 
