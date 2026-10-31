@@ -8,10 +8,7 @@ import { EventEmitter } from '@core/events/emitter.js';
 import type { Result } from '@core/utils/result.js';
 import { err, ok } from '@core/utils/result.js';
 import { LanguageCode } from '@domain/transcript/language-code.js';
-import type {
-  TranscriptExtractorConfig,
-  TranscriptExtractorPort,
-} from '@domain/transcript/ports/transcript-extractor.port.js';
+import type { TranscriptExtractorPort } from '@domain/transcript/ports/transcript-extractor.port.js';
 import type { TranscriptRepositoryPort } from '@domain/transcript/ports/transcript-repository.port.js';
 import { Transcript } from '@domain/transcript/transcript.js';
 import { VideoId } from '@domain/transcript/video-id.js';
@@ -67,7 +64,7 @@ export class TranscriptService {
     const targetLang = language ?? LanguageCode.createUnsafe(this.config.defaultLanguage);
 
     // Emit event
-    this.eventEmitter.emit('transcript:requested', {
+    void this.eventEmitter.emit('transcript:requested', {
       videoId: videoId.value,
       language: targetLang.code,
       forceRefresh,
@@ -81,13 +78,13 @@ export class TranscriptService {
           videoId: videoId.value,
           language: targetLang.code,
         });
-        this.eventEmitter.emit('cache:hit', {
+        void this.eventEmitter.emit('cache:hit', {
           key: `transcript:${videoId.value}:${targetLang.code}`,
         });
         return ok({ transcript: cachedResult.value, fromCache: true });
       }
       if (cachedResult.ok) {
-        this.eventEmitter.emit('cache:miss', {
+        void this.eventEmitter.emit('cache:miss', {
           key: `transcript:${videoId.value}:${targetLang.code}`,
         });
       }
@@ -127,7 +124,7 @@ export class TranscriptService {
           duration: transcript.durationFormatted,
         });
 
-        this.eventEmitter.emit('transcript:fetched', {
+        void this.eventEmitter.emit('transcript:fetched', {
           videoId: videoId.value,
           language: targetLang.code,
           source: extractor.name,
@@ -161,7 +158,7 @@ export class TranscriptService {
 
     const errorCode =
       lastError instanceof AppError ? lastError.code : ErrorCodes.TRANSCRIPT_FETCH_FAILED;
-    this.eventEmitter.emit('transcript:failed', {
+    void this.eventEmitter.emit('transcript:failed', {
       videoId: videoId.value,
       language: targetLang.code,
       error: errorCode,
