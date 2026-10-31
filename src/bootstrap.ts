@@ -13,24 +13,10 @@ import {
   type SummarizationConfig,
   type TranscriptConfig,
 } from '@config/index.js';
-import {
-  TypedContainer,
-  diContainer,
-  provideFactory,
-  provideSingleton,
-  provideValue,
-} from '@core/di/container.js';
+import { TypedContainer, provideFactory, provideValue } from '@core/di/container.js';
 import { initializeLifecycleManager, type LifecycleManager } from '@core/di/lifecycle.js';
-import type { TokenMap } from '@core/di/tokens.js';
 import { initializeEventEmitter, type EventEmitter } from '@core/events/emitter.js';
-import { getLogger, initializeLogger, type AppLogger } from '@core/logging/logger.js';
-
-// Domain ports
-import type {
-  TranscriptExtractorPort,
-  TranscriptRepositoryPort,
-  VideoExtractorPort,
-} from '@domain/transcript/ports/index.js';
+import { initializeLogger, type AppLogger } from '@core/logging/logger.js';
 
 // Infrastructure adapters
 import { MemoryTranscriptRepository } from '@infrastructure/transcript/memory-transcript.repository.js';
@@ -72,7 +58,7 @@ export function registerCoreServices(container: TypedContainer, config: AppConfi
  * Register domain ports (interfaces)
  * These will be implemented by infrastructure adapters
  */
-export function registerDomainPorts(container: TypedContainer): void {
+export function registerDomainPorts(_container: TypedContainer): void {
   // Transcript Repository Port - will be bound in registerInfrastructureAdapters
   // Summary Repository Port - will be bound later
   // Video Extractor Port - will be bound later
@@ -81,19 +67,19 @@ export function registerDomainPorts(container: TypedContainer): void {
 /**
  * Register infrastructure adapters
  */
-export function registerInfrastructureAdapters(container: TypedContainer): void {
+export function registerInfrastructureAdapters(_container: TypedContainer): void {
   // Transcript Adapters
-  provideFactory('youtubeTranscriptApiAdapter' as any, (c) => {
-    return new YoutubeTranscriptApiAdapter(c.resolve('transcriptConfig'));
+  provideFactory('youtubeTranscriptApiAdapter', (_c) => {
+    return new YoutubeTranscriptApiAdapter(_c.resolve('transcriptConfig'));
   });
-  provideFactory('ytDlpAdapter' as any, (c) => {
-    return new YtDlpAdapter(c.resolve('transcriptConfig'));
+  provideFactory('ytDlpAdapter', (_c) => {
+    return new YtDlpAdapter(_c.resolve('transcriptConfig'));
   });
 
   // Transcript Repository - choose based on config
-  provideFactory('transcriptRepository' as any, (c) => {
-    const cacheConfig = c.resolve('cacheConfig') as CacheConfig;
-    const logger = c.resolve('logger') as {
+  provideFactory('transcriptRepository', (_c) => {
+    const cacheConfig = _c.resolve('cacheConfig') as CacheConfig;
+    const logger = _c.resolve('logger') as {
       debug: (msg: string, meta?: Record<string, unknown>) => void;
       error: (msg: string, meta?: Record<string, unknown>) => void;
     };
@@ -118,56 +104,56 @@ export function registerInfrastructureAdapters(container: TypedContainer): void 
   });
 
   // LLM Adapters - will be registered in Phase 3
-  // provideSingleton(container, 'claudeAdapter' as any, ClaudeAdapter);
-  // provideSingleton(container, 'openaiAdapter' as any, OpenAIAdapter);
-  // provideSingleton(container, 'ollamaAdapter' as any, OllamaAdapter);
+  // provideFactory('claudeAdapter', () => new ClaudeAdapter(...));
+  // provideFactory('openaiAdapter', () => new OpenAIAdapter(...));
+  // provideFactory('ollamaAdapter', () => new OllamaAdapter(...));
 
   // LLM Router - will be registered in Phase 3
-  // provideFactory(container, 'llmRouter' as any, (c) => { ... });
+  // provideFactory('llmRouter', (_c) => { ... });
 
   // Chunking Service - will be registered in Phase 3
-  // provideSingleton(container, 'chunkingService' as any, ChunkingService);
+  // provideFactory('chunkingService', () => new ChunkingService(...));
 
   // Cache Repositories - generic cache repos (different from transcript-specific)
-  // provideSingleton(container, 'sqliteRepository' as any, SqliteRepository);
-  // provideSingleton(container, 'memoryRepository' as any, MemoryRepository);
+  // provideFactory('sqliteRepository', () => new SqliteRepository(...));
+  // provideFactory('memoryRepository', () => new MemoryRepository(...));
 }
 
 /**
  * Register application services
  */
-export function registerApplicationServices(container: TypedContainer): void {
+export function registerApplicationServices(_container: TypedContainer): void {
   // Transcript Service
-  provideFactory('transcriptService' as any, (c) => {
+  provideFactory('transcriptService', (_c) => {
     return new TranscriptService({
-      extractors: [c.resolve('youtubeTranscriptApiAdapter'), c.resolve('ytDlpAdapter')],
-      repository: c.resolve('transcriptRepository'),
-      config: c.resolve('transcriptConfig'),
-      eventEmitter: c.resolve('eventEmitter'),
-      logger: c.resolve('logger'),
+      extractors: [_c.resolve('youtubeTranscriptApiAdapter'), _c.resolve('ytDlpAdapter')],
+      repository: _c.resolve('transcriptRepository'),
+      config: _c.resolve('transcriptConfig'),
+      eventEmitter: _c.resolve('eventEmitter'),
+      logger: _c.resolve('logger'),
     });
   });
 
   // Summary Service - will be registered in Phase 3
-  // provideFactory(container, 'summaryService' as any, (c) => { ... });
+  // provideFactory('summaryService', (_c) => { ... });
 
   // Cache Service - will be registered in Phase 3
-  // provideFactory(container, 'cacheService' as any, (c) => { ... });
+  // provideFactory('cacheService', (_c) => { ... });
 }
 
 /**
  * Register use cases
  */
-export function registerUseCases(container: TypedContainer): void {
-  provideFactory('getTranscriptUseCase' as any, (c) => {
+export function registerUseCases(_container: TypedContainer): void {
+  provideFactory('getTranscriptUseCase', (_c) => {
     return new GetTranscriptUseCase({
-      transcriptService: c.resolve('transcriptService'),
-      logger: c.resolve('logger'),
+      transcriptService: _c.resolve('transcriptService'),
+      logger: _c.resolve('logger'),
     });
   });
 
-  // provideFactory(container, 'getSummaryUseCase' as any, (c) => { ... });
-  // provideFactory(container, 'searchVideosUseCase' as any, (c) => { ... });
+  // provideFactory('getSummaryUseCase', (_c) => { ... });
+  // provideFactory('searchVideosUseCase', (_c) => { ... });
 }
 
 /**
@@ -200,7 +186,7 @@ export function registerMCPComponents(container: TypedContainer): void {
 /**
  * Register HTTP components (for HTTP/SSE transport)
  */
-export function registerHTTPComponents(container: TypedContainer): void {
+export function registerHTTPComponents(_container: TypedContainer): void {
   // HTTP Server
   // provideFactory(container, 'httpServer' as any, (c) => {
   //   return new HttpServer(
@@ -221,12 +207,12 @@ export function registerHTTPComponents(container: TypedContainer): void {
 /**
  * Main bootstrap function - registers all services
  */
-export async function bootstrap(container: TypedContainer = new TypedContainer()): Promise<{
+export function bootstrap(container: TypedContainer = new TypedContainer()): {
   container: TypedContainer;
   config: AppConfig;
   logger: AppLogger;
   lifecycleManager: LifecycleManager;
-}> {
+} {
   // 1. Load and validate configuration
   const config = loadConfig();
 

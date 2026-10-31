@@ -5,8 +5,6 @@
 import { AppError } from '@core/errors/index.js';
 import type { Result } from '@core/utils/result.js';
 import { err, ok } from '@core/utils/result.js';
-import { LanguageCode } from '@domain/transcript/language-code.js';
-import { Transcript } from '@domain/transcript/transcript.js';
 import { VideoId } from '@domain/transcript/video-id.js';
 import type { GetTranscriptInput, GetTranscriptOutput } from '../dto/transcript.dto.js';
 import { parseGetTranscriptInput } from '../dto/transcript.dto.js';
