@@ -3,7 +3,12 @@
  * Provides type-safe registration and resolution
  */
 
-import { container as tsyringeContainer, type DependencyContainer, type InjectionToken, Lifecycle } from 'tsyringe';
+import {
+  Lifecycle,
+  container as tsyringeContainer,
+  type DependencyContainer,
+  type InjectionToken,
+} from 'tsyringe';
 
 /**
  * Extended container with type-safe methods
@@ -18,14 +23,23 @@ export class TypedContainer {
   /**
    * Register a singleton (single instance for entire app lifecycle)
    */
-  registerSingleton<T>(token: InjectionToken<T>, implementation: new (...args: unknown[]) => T): void {
-    this.container.register(token, { useClass: implementation, lifecycle: Lifecycle.Singleton } as any);
+  registerSingleton<T>(
+    token: InjectionToken<T>,
+    implementation: new (...args: unknown[]) => T
+  ): void {
+    this.container.register(token, {
+      useClass: implementation,
+      lifecycle: Lifecycle.Singleton,
+    } as any);
   }
 
   /**
    * Register a transient (new instance each resolution)
    */
-  registerTransient<T>(token: InjectionToken<T>, implementation: new (...args: unknown[]) => T): void {
+  registerTransient<T>(
+    token: InjectionToken<T>,
+    implementation: new (...args: unknown[]) => T
+  ): void {
     this.container.register(token, { useClass: implementation } as any);
   }
 
@@ -33,7 +47,10 @@ export class TypedContainer {
    * Register a scoped instance (single instance per scope)
    */
   registerScoped<T>(token: InjectionToken<T>, implementation: new (...args: unknown[]) => T): void {
-    this.container.register(token, { useClass: implementation, lifecycle: Lifecycle.ContainerScoped } as any);
+    this.container.register(token, {
+      useClass: implementation,
+      lifecycle: Lifecycle.ContainerScoped,
+    } as any);
   }
 
   /**
@@ -119,15 +136,24 @@ export function inject<T>(token: InjectionToken<T>): T {
 /**
  * Type-safe registration helpers
  */
-export function provideSingleton<T>(token: InjectionToken<T>, implementation: new (...args: unknown[]) => T): void {
+export function provideSingleton<T>(
+  token: InjectionToken<T>,
+  implementation: new (...args: unknown[]) => T
+): void {
   diContainer.registerSingleton(token, implementation);
 }
 
-export function provideTransient<T>(token: InjectionToken<T>, implementation: new (...args: unknown[]) => T): void {
+export function provideTransient<T>(
+  token: InjectionToken<T>,
+  implementation: new (...args: unknown[]) => T
+): void {
   diContainer.registerTransient(token, implementation);
 }
 
-export function provideFactory<T>(token: InjectionToken<T>, factory: (c: TypedContainer) => T): void {
+export function provideFactory<T>(
+  token: InjectionToken<T>,
+  factory: (c: TypedContainer) => T
+): void {
   // Wrap the factory to convert TypedContainer to DependencyContainer
   diContainer.registerFactory(token, (c: DependencyContainer) => {
     const typedContainer = new TypedContainer(c);

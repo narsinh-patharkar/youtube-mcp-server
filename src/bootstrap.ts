@@ -3,12 +3,44 @@
  * Composition root for the application
  */
 
-import { TypedContainer, provideValue, provideFactory, provideSingleton, diContainer } from '@core/di/container.js';
-import type { TokenMap } from '@core/di/tokens.js';
-import { loadConfig, type AppConfig, type TranscriptConfig, type SummarizationConfig, type CacheConfig, type RateLimitConfig, type HTTPConfig, type LoggingConfig } from '@config/index.js';
-import { initializeLogger, getLogger, type AppLogger } from '@core/logging/logger.js';
+import {
+  loadConfig,
+  type AppConfig,
+  type CacheConfig,
+  type HTTPConfig,
+  type LoggingConfig,
+  type RateLimitConfig,
+  type SummarizationConfig,
+  type TranscriptConfig,
+} from '@config/index.js';
+import {
+  TypedContainer,
+  diContainer,
+  provideFactory,
+  provideSingleton,
+  provideValue,
+} from '@core/di/container.js';
 import { initializeLifecycleManager, type LifecycleManager } from '@core/di/lifecycle.js';
+import type { TokenMap } from '@core/di/tokens.js';
 import { initializeEventEmitter, type EventEmitter } from '@core/events/emitter.js';
+import { getLogger, initializeLogger, type AppLogger } from '@core/logging/logger.js';
+
+// Domain ports
+import type {
+  TranscriptExtractorPort,
+  TranscriptRepositoryPort,
+  VideoExtractorPort,
+} from '@domain/transcript/ports/index.js';
+
+// Infrastructure adapters
+import { MemoryTranscriptRepository } from '@infrastructure/transcript/memory-transcript.repository.js';
+import { SqliteTranscriptRepository } from '@infrastructure/transcript/sqlite-transcript.repository.js';
+import { YoutubeTranscriptApiAdapter } from '@infrastructure/transcript/youtube-transcript-api.adapter.js';
+import { YtDlpAdapter } from '@infrastructure/transcript/yt-dlp.adapter.js';
+
+// Application services
+import { TranscriptService } from '@application/services/transcript.service.js';
+import { GetTranscriptUseCase } from '@application/use-cases/get-transcript.use-case.js';
 
 /**
  * Register all core infrastructure services
@@ -41,20 +73,9 @@ export function registerCoreServices(container: TypedContainer, config: AppConfi
  * These will be implemented by infrastructure adapters
  */
 export function registerDomainPorts(container: TypedContainer): void {
-  // Transcript Repository Port
-  // provideFactory(container, 'transcriptRepository' as any, (c) => {
-  //   return new SqliteTranscriptRepository(c.resolve('cacheConfig'), c.resolve('logger'));
-  // });
-
-  // Summary Repository Port
-  // provideFactory(container, 'summaryRepository' as any, (c) => {
-  //   return new SqliteSummaryRepository(c.resolve('cacheConfig'), c.resolve('logger'));
-  // });
-
-  // Video Extractor Port
-  // provideFactory(container, 'videoExtractor' as any, (c) => {
-  //   return new VideoExtractor();
-  // });
+  // Transcript Repository Port - will be bound in registerInfrastructureAdapters
+  // Summary Repository Port - will be bound later
+  // Video Extractor Port - will be bound later
 }
 
 /**
@@ -62,29 +83,52 @@ export function registerDomainPorts(container: TypedContainer): void {
  */
 export function registerInfrastructureAdapters(container: TypedContainer): void {
   // Transcript Adapters
-  // provideSingleton(container, 'youtubeTranscriptApiAdapter' as any, YoutubeTranscriptApiAdapter);
-  // provideSingleton(container, 'ytDlpAdapter' as any, YtDlpAdapter);
+  provideFactory('youtubeTranscriptApiAdapter' as any, (c) => {
+    return new YoutubeTranscriptApiAdapter(c.resolve('transcriptConfig'));
+  });
+  provideFactory('ytDlpAdapter' as any, (c) => {
+    return new YtDlpAdapter(c.resolve('transcriptConfig'));
+  });
 
-  // LLM Adapters
+  // Transcript Repository - choose based on config
+  provideFactory('transcriptRepository' as any, (c) => {
+    const cacheConfig = c.resolve('cacheConfig') as CacheConfig;
+    const logger = c.resolve('logger') as {
+      debug: (msg: string, meta?: Record<string, unknown>) => void;
+      error: (msg: string, meta?: Record<string, unknown>) => void;
+    };
+    if (cacheConfig.type === 'memory' || cacheConfig.type === 'sqlite') {
+      if (cacheConfig.type === 'memory') {
+        return new MemoryTranscriptRepository(
+          cacheConfig.ttlSeconds,
+          cacheConfig.cleanupIntervalMs
+        );
+      }
+      const repo = new SqliteTranscriptRepository(cacheConfig, logger);
+      // Initialize asynchronously - will be ready by first use
+      repo
+        .initialize()
+        .catch((err) =>
+          logger.error('Failed to initialize SQLite transcript repository', { error: err.message })
+        );
+      return repo;
+    }
+    // Default to memory
+    return new MemoryTranscriptRepository(cacheConfig.ttlSeconds, cacheConfig.cleanupIntervalMs);
+  });
+
+  // LLM Adapters - will be registered in Phase 3
   // provideSingleton(container, 'claudeAdapter' as any, ClaudeAdapter);
   // provideSingleton(container, 'openaiAdapter' as any, OpenAIAdapter);
   // provideSingleton(container, 'ollamaAdapter' as any, OllamaAdapter);
 
-  // LLM Router
-  // provideFactory(container, 'llmRouter' as any, (c) => {
-  //   return new LLMRouter(
-  //     c.resolve('summarizationConfig'),
-  //     c.resolve('claudeAdapter'),
-  //     c.resolve('openaiAdapter'),
-  //     c.resolve('ollamaAdapter'),
-  //     c.resolve('logger')
-  //   );
-  // });
+  // LLM Router - will be registered in Phase 3
+  // provideFactory(container, 'llmRouter' as any, (c) => { ... });
 
-  // Chunking Service
+  // Chunking Service - will be registered in Phase 3
   // provideSingleton(container, 'chunkingService' as any, ChunkingService);
 
-  // Cache Repositories
+  // Cache Repositories - generic cache repos (different from transcript-specific)
   // provideSingleton(container, 'sqliteRepository' as any, SqliteRepository);
   // provideSingleton(container, 'memoryRepository' as any, MemoryRepository);
 }
@@ -94,66 +138,36 @@ export function registerInfrastructureAdapters(container: TypedContainer): void 
  */
 export function registerApplicationServices(container: TypedContainer): void {
   // Transcript Service
-  // provideFactory(container, 'transcriptService' as any, (c) => {
-  //   return new TranscriptService(
-  //     c.resolve('transcriptConfig'),
-  //     c.resolve('youtubeTranscriptApiAdapter'),
-  //     c.resolve('ytDlpAdapter'),
-  //     c.resolve('transcriptRepository'),
-  //     c.resolve('logger'),
-  //     c.resolve('eventEmitter')
-  //   );
-  // });
+  provideFactory('transcriptService' as any, (c) => {
+    return new TranscriptService({
+      extractors: [c.resolve('youtubeTranscriptApiAdapter'), c.resolve('ytDlpAdapter')],
+      repository: c.resolve('transcriptRepository'),
+      config: c.resolve('transcriptConfig'),
+      eventEmitter: c.resolve('eventEmitter'),
+      logger: c.resolve('logger'),
+    });
+  });
 
-  // Summary Service
-  // provideFactory(container, 'summaryService' as any, (c) => {
-  //   return new SummaryService(
-  //     c.resolve('summarizationConfig'),
-  //     c.resolve('llmRouter'),
-  //     c.resolve('chunkingService'),
-  //     c.resolve('summaryRepository'),
-  //     c.resolve('logger'),
-  //     c.resolve('eventEmitter')
-  //   );
-  // });
+  // Summary Service - will be registered in Phase 3
+  // provideFactory(container, 'summaryService' as any, (c) => { ... });
 
-  // Cache Service
-  // provideFactory(container, 'cacheService' as any, (c) => {
-  //   return new CacheService(
-  //     c.resolve('cacheConfig'),
-  //     c.resolve('sqliteRepository'),
-  //     c.resolve('memoryRepository'),
-  //     c.resolve('logger')
-  //   );
-  // });
+  // Cache Service - will be registered in Phase 3
+  // provideFactory(container, 'cacheService' as any, (c) => { ... });
 }
 
 /**
  * Register use cases
  */
 export function registerUseCases(container: TypedContainer): void {
-  // provideFactory(container, 'getTranscriptUseCase' as any, (c) => {
-  //   return new GetTranscriptUseCase(
-  //     c.resolve('transcriptService'),
-  //     c.resolve('videoExtractor'),
-  //     c.resolve('logger')
-  //   );
-  // });
+  provideFactory('getTranscriptUseCase' as any, (c) => {
+    return new GetTranscriptUseCase({
+      transcriptService: c.resolve('transcriptService'),
+      logger: c.resolve('logger'),
+    });
+  });
 
-  // provideFactory(container, 'getSummaryUseCase' as any, (c) => {
-  //   return new GetSummaryUseCase(
-  //     c.resolve('transcriptService'),
-  //     c.resolve('summaryService'),
-  //     c.resolve('logger')
-  //   );
-  // });
-
-  // provideFactory(container, 'searchVideosUseCase' as any, (c) => {
-  //   return new SearchVideosUseCase(
-  //     c.resolve('youtubeDataApiAdapter'),
-  //     c.resolve('logger')
-  //   );
-  // });
+  // provideFactory(container, 'getSummaryUseCase' as any, (c) => { ... });
+  // provideFactory(container, 'searchVideosUseCase' as any, (c) => { ... });
 }
 
 /**
@@ -164,25 +178,20 @@ export function registerMCPComponents(container: TypedContainer): void {
   // provideFactory(container, 'mcpServer' as any, (c) => {
   //   return new MCPServer(c.resolve('logger'));
   // });
-
   // Tools
   // provideFactory(container, 'transcriptTool' as any, (c) => {
   //   return new TranscriptTool(c.resolve('getTranscriptUseCase'), c.resolve('logger'));
   // });
-
   // provideFactory(container, 'summaryTool' as any, (c) => {
   //   return new SummaryTool(c.resolve('getSummaryUseCase'), c.resolve('logger'));
   // });
-
   // provideFactory(container, 'searchTool' as any, (c) => {
   //   return new SearchTool(c.resolve('searchVideosUseCase'), c.resolve('logger'));
   // });
-
   // Transports
   // provideFactory(container, 'stdioTransport' as any, (c) => {
   //   return new StdioTransport(c.resolve('mcpServer'), c.resolve('logger'));
   // });
-
   // provideFactory(container, 'httpTransport' as any, (c) => {
   //   return new HttpTransport(c.resolve('mcpServer'), c.resolve('httpConfig'), c.resolve('logger'));
   // });
@@ -203,7 +212,6 @@ export function registerHTTPComponents(container: TypedContainer): void {
   //     c.resolve('logger')
   //   );
   // });
-
   // Middleware
   // provideSingleton(container, 'rateLimitMiddleware' as any, RateLimitMiddleware);
   // provideSingleton(container, 'authMiddleware' as any, AuthMiddleware);

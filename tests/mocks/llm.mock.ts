@@ -2,25 +2,23 @@
  * LLM Mocks - Mock implementations for testing
  */
 
-import type { SummarizationResult, SummarizationRequest, LLMPort } from '@domain/summary/ports.js';
+import type { LLMPort, SummarizationRequest, SummarizationResult } from '@domain/summary/ports.js';
 import type { SummaryStyle } from '@domain/summary/types.js';
 
 /**
  * Create a mock LLM adapter
  */
-export function createMockLLMAdapter(overrides: Partial<{
-  summarize: (request: SummarizationRequest) => Promise<SummarizationResult>;
-  countTokens: (text: string) => number;
-  getModel: () => string;
-  getProvider: () => string;
-}> = {}) {
+export function createMockLLMAdapter(
+  overrides: Partial<{
+    summarize: (request: SummarizationRequest) => Promise<SummarizationResult>;
+    countTokens: (text: string) => number;
+    getModel: () => string;
+    getProvider: () => string;
+  }> = {}
+) {
   const defaultResponse: SummarizationResult = {
     summary: 'This is a mocked summary of the video content.',
-    keyPoints: [
-      'Mock key point 1',
-      'Mock key point 2',
-      'Mock key point 3',
-    ],
+    keyPoints: ['Mock key point 1', 'Mock key point 2', 'Mock key point 3'],
     timestamps: [
       { time: 0, topic: 'Introduction' },
       { time: 60, topic: 'Main Content' },
@@ -103,7 +101,7 @@ export function createSlowLLMAdapter(delayMs: number = 1000) {
   const originalSummarize = mock.summarize;
 
   mock.summarize = vi.fn().mockImplementation(async (...args) => {
-    await new Promise(resolve => setTimeout(resolve, delayMs));
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
     return originalSummarize(...args);
   });
 
@@ -148,11 +146,7 @@ import { vi } from 'vitest';
 
 const defaultResponse: SummarizationResult = {
   summary: 'This is a mocked summary of the video content.',
-  keyPoints: [
-    'Mock key point 1',
-    'Mock key point 2',
-    'Mock key point 3',
-  ],
+  keyPoints: ['Mock key point 1', 'Mock key point 2', 'Mock key point 3'],
   timestamps: [
     { time: 0, topic: 'Introduction' },
     { time: 60, topic: 'Main Content' },

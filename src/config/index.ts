@@ -2,8 +2,8 @@
  * Configuration Module - Public API
  */
 
-export * from './schema.js';
 export * from './loader.js';
+export * from './schema.js';
 export * from './types.js';
 
 // Lazy-loaded singleton
@@ -25,5 +25,5 @@ export function setConfig(config: AppConfig): void {
 }
 
 // Import AppConfig for the function signatures
-import type { AppConfig } from './schema.js';
 import { loadConfig } from './loader.js';
+import type { AppConfig } from './schema.js';

@@ -2,7 +2,7 @@
  * Transcript Mocks - Mock implementations for testing
  */
 
-import type { TranscriptResult, TranscriptPort } from '@domain/transcript/ports.js';
+import type { TranscriptPort, TranscriptResult } from '@domain/transcript/ports.js';
 import type { VideoId } from '@domain/video/types.js';
 import { vi } from 'vitest';
 
@@ -16,7 +16,8 @@ const DEFAULT_TRANSCRIPT: TranscriptResult = {
     { text: 'It adds static typing', start: 12, duration: 3, language: 'en' },
     { text: 'Let me show you some examples', start: 15, duration: 4, language: 'en' },
   ],
-  fullText: 'Welcome to this video Today we will learn about TypeScript TypeScript is a superset of JavaScript It adds static typing Let me show you some examples',
+  fullText:
+    'Welcome to this video Today we will learn about TypeScript TypeScript is a superset of JavaScript It adds static typing Let me show you some examples',
   fetchedAt: new Date(),
   source: 'youtube-transcript-api',
 };
@@ -24,10 +25,12 @@ const DEFAULT_TRANSCRIPT: TranscriptResult = {
 /**
  * Create a mock transcript adapter
  */
-export function createMockTranscriptAdapter(overrides: Partial<{
-  fetch: (videoId: string, language?: string) => Promise<TranscriptResult>;
-  getAvailableLanguages: (videoId: string) => Promise<string[]>;
-}> = {}) {
+export function createMockTranscriptAdapter(
+  overrides: Partial<{
+    fetch: (videoId: string, language?: string) => Promise<TranscriptResult>;
+    getAvailableLanguages: (videoId: string) => Promise<string[]>;
+  }> = {}
+) {
   return {
     fetch: vi.fn().mockResolvedValue(DEFAULT_TRANSCRIPT),
     getAvailableLanguages: vi.fn().mockResolvedValue(['en', 'es', 'fr', 'de']),
@@ -38,9 +41,7 @@ export function createMockTranscriptAdapter(overrides: Partial<{
 /**
  * Create a mock that returns different transcripts per video
  */
-export function createVideoSpecificTranscriptAdapter(
-  transcripts: Map<string, TranscriptResult>
-) {
+export function createVideoSpecificTranscriptAdapter(transcripts: Map<string, TranscriptResult>) {
   return {
     fetch: vi.fn().mockImplementation(async (videoId: string, language?: string) => {
       const transcript = transcripts.get(videoId);
@@ -80,8 +81,16 @@ export function createFailingTranscriptAdapter(
 export function createMultiLanguageTranscriptAdapter(
   transcripts: Record<string, TranscriptResult> = {
     en: { ...DEFAULT_TRANSCRIPT, language: 'en' },
-    es: { ...DEFAULT_TRANSCRIPT, language: 'es', fullText: 'Bienvenido a este video Hoy aprenderemos sobre TypeScript' },
-    fr: { ...DEFAULT_TRANSCRIPT, language: 'fr', fullText: 'Bienvenue dans cette vidéo Aujourd\'hui nous allons apprendre TypeScript' },
+    es: {
+      ...DEFAULT_TRANSCRIPT,
+      language: 'es',
+      fullText: 'Bienvenido a este video Hoy aprenderemos sobre TypeScript',
+    },
+    fr: {
+      ...DEFAULT_TRANSCRIPT,
+      language: 'fr',
+      fullText: "Bienvenue dans cette vidéo Aujourd'hui nous allons apprendre TypeScript",
+    },
   }
 ) {
   return {
@@ -137,7 +146,7 @@ export function createSlowTranscriptAdapter(delayMs: number = 500) {
   const originalFetch = mock.fetch;
 
   mock.fetch = vi.fn().mockImplementation(async (...args) => {
-    await new Promise(resolve => setTimeout(resolve, delayMs));
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
     return originalFetch(...args);
   });
 

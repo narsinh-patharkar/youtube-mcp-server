@@ -14,7 +14,13 @@ const TransportSchema = z.enum(['stdio', 'http', 'sse']);
 const CacheTypeSchema = z.enum(['sqlite', 'redis', 'memory']);
 const TranscriptSourceSchema = z.enum(['youtube-transcript-api', 'yt-dlp']);
 const LLMProviderSchema = z.enum(['claude', 'openai', 'ollama']);
-const SummaryStyleSchema = z.enum(['concise', 'detailed', 'technical', 'action-items', 'bullet-points']);
+const SummaryStyleSchema = z.enum([
+  'concise',
+  'detailed',
+  'technical',
+  'action-items',
+  'bullet-points',
+]);
 
 // ============================================================================
 // Nested Config Schemas
@@ -96,16 +102,20 @@ export const HTTPConfigSchema = z.object({
   enabled: z.boolean().default(false),
   host: z.string().default('0.0.0.0'),
   port: z.number().int().min(1).max(65535).default(3000),
-  cors: z.object({
-    enabled: z.boolean().default(true),
-    origin: z.union([z.string(), z.array(z.string())]).default('*'),
-    credentials: z.boolean().default(false),
-  }).optional(),
-  auth: z.object({
-    enabled: z.boolean().default(false),
-    apiKeys: z.array(z.string()).default([]),
-    headerName: z.string().default('x-api-key'),
-  }).optional(),
+  cors: z
+    .object({
+      enabled: z.boolean().default(true),
+      origin: z.union([z.string(), z.array(z.string())]).default('*'),
+      credentials: z.boolean().default(false),
+    })
+    .optional(),
+  auth: z
+    .object({
+      enabled: z.boolean().default(false),
+      apiKeys: z.array(z.string()).default([]),
+      headerName: z.string().default('x-api-key'),
+    })
+    .optional(),
   requestTimeoutMs: z.number().int().positive().default(30_000),
   bodyLimit: z.string().default('1mb'),
 });

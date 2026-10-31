@@ -2,10 +2,10 @@
  * Test Container - DI container for testing with easy mocking
  */
 
-import { TypedContainer, diContainer, provideValue, provideFactory } from '@core/di/container.js';
+import { TypedContainer, diContainer, provideFactory, provideValue } from '@core/di/container.js';
 import type { TokenMap } from '@core/di/tokens.js';
 import type { AppLogger } from '@core/logging/logger.js';
-import { createMockLogger, createMockConfig } from '../setup.js';
+import { createMockConfig, createMockLogger } from '../setup.js';
 
 /**
  * Create a test container with common mocks pre-registered
@@ -60,7 +60,9 @@ export function mockFactory<T>(implementation: Partial<T> = {}): T {
 /**
  * Create a mock that tracks calls
  */
-export function createSpy<T extends (...args: unknown[]) => unknown>(fn: T): T & { calls: Parameters<T>[] } {
+export function createSpy<T extends (...args: unknown[]) => unknown>(
+  fn: T
+): T & { calls: Parameters<T>[] } {
   const calls: Parameters<T>[] = [];
   const spy = ((...args: Parameters<T>) => {
     calls.push(args);
@@ -77,12 +79,13 @@ export function expectSpyCall<T extends (...args: unknown[]) => unknown>(
   spy: T & { calls: Parameters<T>[] },
   expectedArgs: Parameters<T>
 ): void {
-  const found = spy.calls.some(call =>
-    call.length === expectedArgs.length &&
-    call.every((arg, i) => arg === expectedArgs[i])
+  const found = spy.calls.some(
+    (call) => call.length === expectedArgs.length && call.every((arg, i) => arg === expectedArgs[i])
   );
 
   if (!found) {
-    throw new Error(`Spy was not called with expected arguments.\nExpected: ${JSON.stringify(expectedArgs)}\nActual calls: ${JSON.stringify(spy.calls)}`);
+    throw new Error(
+      `Spy was not called with expected arguments.\nExpected: ${JSON.stringify(expectedArgs)}\nActual calls: ${JSON.stringify(spy.calls)}`
+    );
   }
 }

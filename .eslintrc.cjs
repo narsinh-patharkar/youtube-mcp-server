@@ -12,11 +12,7 @@ module.exports = {
     project: ['./tsconfig.json', './tsconfig.test.json'],
     tsconfigRootDir: __dirname,
   },
-  plugins: {
-    '@typescript-eslint': true,
-    'import': true,
-    'prefer-arrow': true,
-  },
+  plugins: ['@typescript-eslint', 'import', 'prefer-arrow'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended-type-checked',
@@ -32,6 +28,14 @@ module.exports = {
     '*.d.ts',
     'coverage/',
   ],
+  settings: {
+    'import/resolver': {
+      typescript: {
+        alwaysTryTypes: true,
+        project: ['./tsconfig.json', './tsconfig.test.json'],
+      },
+    },
+  },
   rules: {
     // TypeScript ESLint
     '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
@@ -80,7 +84,7 @@ module.exports = {
     // Prefer arrow functions
     'prefer-arrow/prefer-arrow-functions': [
       'error',
-      { allowNamedFunctions: true, classPropertiesAllowed: false },
+      { allowStandaloneDeclarations: true, classPropertiesAllowed: false },
     ],
 
     // General

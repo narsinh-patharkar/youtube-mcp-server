@@ -3,8 +3,8 @@
  * These map to MCP error responses
  */
 
-import type { ErrorCode } from './error-codes.js';
 import { MCPError } from './domain-errors.js';
+import type { ErrorCode } from './error-codes.js';
 
 interface MCPErrorOptions {
   code?: ErrorCode;
@@ -25,11 +25,11 @@ export class ToolExecutionError extends MCPError {
     message: string,
     options?: MCPErrorOptions
   ) {
-    super(
-      options?.code ?? 'MCP_TOOL_EXECUTION_FAILED',
-      message,
-      { toolName, ...options?.context, cause: options?.cause }
-    );
+    super(options?.code ?? 'MCP_TOOL_EXECUTION_FAILED', message, {
+      toolName,
+      ...options?.context,
+      cause: options?.cause,
+    });
     this.toolName = toolName;
     this.arguments_ = arguments_;
   }
@@ -42,11 +42,7 @@ export class InvalidToolArgumentsError extends MCPError {
   public readonly toolName: string;
   public readonly validationErrors: string[];
 
-  constructor(
-    toolName: string,
-    validationErrors: string[],
-    options?: MCPErrorOptions
-  ) {
+  constructor(toolName: string, validationErrors: string[], options?: MCPErrorOptions) {
     const context = { toolName, validationErrors, ...options?.context };
     super(
       'MCP_INVALID_ARGUMENTS',
@@ -65,11 +61,7 @@ export class ToolNotFoundError extends MCPError {
   public readonly toolName: string;
   public readonly availableTools: string[];
 
-  constructor(
-    toolName: string,
-    availableTools: string[],
-    options?: MCPErrorOptions
-  ) {
+  constructor(toolName: string, availableTools: string[], options?: MCPErrorOptions) {
     const context = { toolName, availableTools, ...options?.context };
     super(
       'MCP_TOOL_NOT_FOUND',
@@ -87,17 +79,12 @@ export class ToolNotFoundError extends MCPError {
 export class TransportError extends MCPError {
   public readonly transport: string;
 
-  constructor(
-    transport: string,
-    message: string,
-    options?: MCPErrorOptions
-  ) {
+  constructor(transport: string, message: string, options?: MCPErrorOptions) {
     const context = { transport, ...options?.context };
-    super(
-      options?.code ?? 'MCP_TRANSPORT_ERROR',
-      `${transport} transport error: ${message}`,
-      { ...context, cause: options?.cause }
-    );
+    super(options?.code ?? 'MCP_TRANSPORT_ERROR', `${transport} transport error: ${message}`, {
+      ...context,
+      cause: options?.cause,
+    });
     this.transport = transport;
   }
 }
@@ -111,7 +98,12 @@ export class ProtocolError extends MCPError {
 
   constructor(
     message: string,
-    options?: { method?: string; requestId?: string | number; cause?: Error; context?: Record<string, unknown> }
+    options?: {
+      method?: string;
+      requestId?: string | number;
+      cause?: Error;
+      context?: Record<string, unknown>;
+    }
   ) {
     super('MCP_PROTOCOL_ERROR', message, { ...options?.context, cause: options?.cause });
     this.method = options?.method;

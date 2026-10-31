@@ -5,15 +5,15 @@
 
 export type {
   AppConfig,
-  TranscriptConfig,
-  SummarizationConfig,
   CacheConfig,
-  RateLimitConfig,
   HTTPConfig,
-  LoggingConfig,
   LLMClaudeConfig,
-  LLMOpenAIConfig,
   LLMOllamaConfig,
+  LLMOpenAIConfig,
+  LoggingConfig,
+  RateLimitConfig,
+  SummarizationConfig,
+  TranscriptConfig,
 } from './schema.js';
 
 export { ConfigSections } from './schema.js';

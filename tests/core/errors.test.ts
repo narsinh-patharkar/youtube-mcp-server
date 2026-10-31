@@ -2,11 +2,25 @@
  * Core Errors Tests
  */
 
-import { describe, it, expect } from 'vitest';
 import { AppError, isAppError, ValidationError } from '@core/errors/index.js';
-import { ok, err, isOk, isErr, unwrap, unwrapOr, unwrapOrElse, trySync } from '@core/utils/result.js';
+import {
+  err,
+  isErr,
+  isOk,
+  ok,
+  trySync,
+  unwrap,
+  unwrapOr,
+  unwrapOrElse,
+} from '@core/utils/result.js';
+import {
+  CommonSchemas,
+  validate,
+  validateOrThrow,
+  ValidationError,
+} from '@core/utils/validation.js';
+import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { validate, validateOrThrow, ValidationError, CommonSchemas } from '@core/utils/validation.js';
 
 describe('AppError', () => {
   it('should create an error with all properties', () => {
@@ -108,7 +122,9 @@ describe('Result type', () => {
   });
 
   it('should trySync catch errors and wrap in AppError', () => {
-    const result = trySync(() => { throw new Error('Test'); });
+    const result = trySync(() => {
+      throw new Error('Test');
+    });
     expect(isErr(result)).toBe(true);
     // trySync wraps the error in AppError with INTERNAL_ERROR code
     expect(result.error).toBeInstanceOf(AppError);

@@ -11,8 +11,7 @@ import { isRetryableError } from './error-codes.js';
  * Inspired by Rust's Result<T, E> / neverthrow
  */
 export type Result<T, E = AppError> =
-  | { readonly ok: true; readonly value: T }
-  | { readonly ok: false; readonly error: E };
+  { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: E };
 
 export function ok<T>(value: T): Result<T, never> {
   return { ok: true, value };
@@ -22,11 +21,15 @@ export function err<E extends AppError>(error: E): Result<never, E> {
   return { ok: false, error };
 }
 
-export function isOk<T, E>(result: Result<T, E>): result is { readonly ok: true; readonly value: T } {
+export function isOk<T, E>(
+  result: Result<T, E>
+): result is { readonly ok: true; readonly value: T } {
   return result.ok === true;
 }
 
-export function isErr<T, E>(result: Result<T, E>): result is { readonly ok: false; readonly error: E } {
+export function isErr<T, E>(
+  result: Result<T, E>
+): result is { readonly ok: false; readonly error: E } {
   return result.ok === false;
 }
 
@@ -123,7 +126,11 @@ export function isErrorRetryable(error: unknown): boolean {
 /**
  * Get retry delay with exponential backoff
  */
-export function getRetryDelay(attempt: number, baseDelayMs: number = 1000, maxDelayMs: number = 30000): number {
+export function getRetryDelay(
+  attempt: number,
+  baseDelayMs: number = 1000,
+  maxDelayMs: number = 30000
+): number {
   const delay = Math.min(baseDelayMs * Math.pow(2, attempt), maxDelayMs);
   // Add jitter (±25%)
   const jitter = delay * 0.25 * (Math.random() * 2 - 1);
@@ -160,11 +167,13 @@ export async function withRetry<T>(
       lastError = error instanceof Error ? error : new Error(String(error));
 
       // Check if we should retry
-      const shouldRetry = isErrorRetryable(lastError) &&
-        (!retryableCodes || retryableCodes.some(code => {
-          if (isAppError(lastError)) return lastError.code === code;
-          return false;
-        }));
+      const shouldRetry =
+        isErrorRetryable(lastError) &&
+        (!retryableCodes ||
+          retryableCodes.some((code) => {
+            if (isAppError(lastError)) return lastError.code === code;
+            return false;
+          }));
 
       if (!shouldRetry || attempt === maxAttempts - 1) {
         throw lastError;
@@ -176,7 +185,7 @@ export async function withRetry<T>(
         onRetry(lastError, attempt + 1);
       }
 
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 

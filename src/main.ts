@@ -5,9 +5,10 @@
  * It wires together the complete application.
  */
 
-import { bootstrap } from './bootstrap.js';
-import { getLogger } from '@core/logging/logger.js';
 import { getLifecycleManager } from '@core/di/lifecycle.js';
+import { getLogger } from '@core/logging/logger.js';
+import 'reflect-metadata';
+import { bootstrap } from './bootstrap.js';
 
 async function main(): Promise<void> {
   try {
@@ -46,7 +47,9 @@ async function main(): Promise<void> {
         logger.info('Shutdown complete');
         process.exit(0);
       } catch (error) {
-        logger.error('Shutdown failed', { error: error instanceof Error ? error.message : String(error) });
+        logger.error('Shutdown failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         process.exit(1);
       }
     };
@@ -61,7 +64,9 @@ async function main(): Promise<void> {
     });
 
     process.on('unhandledRejection', (reason) => {
-      logger.fatal('Unhandled rejection', { reason: reason instanceof Error ? reason.message : String(reason) });
+      logger.fatal('Unhandled rejection', {
+        reason: reason instanceof Error ? reason.message : String(reason),
+      });
       lifecycleManager.stop().finally(() => process.exit(1));
     });
 
@@ -71,7 +76,6 @@ async function main(): Promise<void> {
       // or we receive a shutdown signal
       await new Promise(() => {}); // Wait forever
     }
-
   } catch (error) {
     // Fallback logging if bootstrap fails
     const logger = getLogger();

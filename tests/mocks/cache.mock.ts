@@ -27,12 +27,14 @@ export function createMockCacheRepository<T = unknown>() {
       return entry.value;
     }),
 
-    set: vi.fn().mockImplementation(async (key: string, value: T, ttlSeconds: number): Promise<void> => {
-      store.set(key, {
-        value,
-        expiresAt: Date.now() + ttlSeconds * 1000,
-      });
-    }),
+    set: vi
+      .fn()
+      .mockImplementation(async (key: string, value: T, ttlSeconds: number): Promise<void> => {
+        store.set(key, {
+          value,
+          expiresAt: Date.now() + ttlSeconds * 1000,
+        });
+      }),
 
     delete: vi.fn().mockImplementation(async (key: string): Promise<boolean> => {
       return store.delete(key);
@@ -88,12 +90,14 @@ function createSharedMockCacheRepository<T = unknown>() {
       return entry.value;
     }),
 
-    set: vi.fn().mockImplementation(async (key: string, value: T, ttlSeconds: number): Promise<void> => {
-      store.set(key, {
-        value,
-        expiresAt: Date.now() + ttlSeconds * 1000,
-      });
-    }),
+    set: vi
+      .fn()
+      .mockImplementation(async (key: string, value: T, ttlSeconds: number): Promise<void> => {
+        store.set(key, {
+          value,
+          expiresAt: Date.now() + ttlSeconds * 1000,
+        });
+      }),
 
     delete: vi.fn().mockImplementation(async (key: string): Promise<boolean> => {
       return store.delete(key);
