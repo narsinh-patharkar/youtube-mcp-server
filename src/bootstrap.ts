@@ -33,6 +33,12 @@ import { ChunkingService } from '@infrastructure/llm/chunking.service.js';
 import { MemorySummaryRepository } from '@infrastructure/llm/memory-summary.repository.js';
 import { SqliteSummaryRepository } from '@infrastructure/llm/sqlite-summary.repository.js';
 
+// Infrastructure - MCP
+import { MCPServerWrapper } from '@infrastructure/mcp/server/mcp-server.js';
+import { StdioTransport } from '@infrastructure/mcp/transports/stdio.transport.js';
+import { HttpTransport } from '@infrastructure/mcp/transports/http.transport.js';
+import { SseTransport } from '@infrastructure/mcp/transports/sse.transport.js';
+
 // Application services
 import { TranscriptService } from '@application/services/transcript.service.js';
 import { SummaryService } from '@application/services/summary.service.js';
@@ -300,25 +306,31 @@ export function registerUseCases(_container: TypedContainer): void {
  */
 export function registerMCPComponents(container: TypedContainer): void {
   // MCP Server
-  // provideFactory(container, 'mcpServer' as any, (c) => {
-  //   return new MCPServer(c.resolve('logger'));
+  provideFactory('mcpServer', (c) => {
+    return new MCPServerWrapper(
+      c.resolve('logger'),
+      c.resolve('eventEmitter'),
+      c.resolve('getTranscriptUseCase'),
+      c.resolve('getSummaryUseCase')
+    );
+  });
+
+  // MCP Transport - stdio (default)
+  provideFactory('stdioTransport', (c) => {
+    return new StdioTransport(
+      c.resolve('mcpServer'),
+      c.resolve('logger')
+    );
+  });
+
+  // HTTP Transport (for Phase 5)
+  // provideFactory('httpTransport', (c) => {
+  //   return new HttpTransport(c.resolve('mcpServer'), c.resolve('logger'));
   // });
-  // Tools
-  // provideFactory(container, 'transcriptTool' as any, (c) => {
-  //   return new TranscriptTool(c.resolve('getTranscriptUseCase'), c.resolve('logger'));
-  // });
-  // provideFactory(container, 'summaryTool' as any, (c) => {
-  //   return new SummaryTool(c.resolve('getSummaryUseCase'), c.resolve('logger'));
-  // });
-  // provideFactory(container, 'searchTool' as any, (c) => {
-  //   return new SearchTool(c.resolve('searchVideosUseCase'), c.resolve('logger'));
-  // });
-  // Transports
-  // provideFactory(container, 'stdioTransport' as any, (c) => {
-  //   return new StdioTransport(c.resolve('mcpServer'), c.resolve('logger'));
-  // });
-  // provideFactory(container, 'httpTransport' as any, (c) => {
-  //   return new HttpTransport(c.resolve('mcpServer'), c.resolve('httpConfig'), c.resolve('logger'));
+
+  // SSE Transport (for Phase 5)
+  // provideFactory('sseTransport', (c) => {
+  //   return new SseTransport(c.resolve('mcpServer'), c.resolve('logger'));
   // });
 }
 

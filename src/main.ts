@@ -29,13 +29,12 @@ async function main(): Promise<void> {
 
     // Handle transport
     if (config.transport === 'stdio') {
-      // Stdio transport is handled by MCP server directly
-      // The server will be started when tools are invoked
-      logger.info('MCP server ready on stdio transport');
+      // Start stdio transport for MCP server
+      const stdioTransport = container.resolve('stdioTransport') as { start(): Promise<void> };
+      await stdioTransport.start();
+      logger.info('MCP server started on stdio transport');
     } else if (config.transport === 'http' || config.transport === 'sse') {
       // HTTP/SSE transport
-      // const httpServer = container.resolve('httpServer');
-      // await httpServer.start();
       logger.info('HTTP/SSE transport not yet implemented', { transport: config.transport });
     }
 
